@@ -105,7 +105,6 @@ export default function Navbar() {
             )}
           </Button>
 
-          {/* User info + logout (desktop) */}
           {user && (
             <div className="hidden items-center gap-2 sm:flex">
               <span className="text-sm font-medium text-muted-foreground">
@@ -135,7 +134,6 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile nav */}
           <div className="flex items-center gap-1 sm:hidden">
             <Link
               href="/"

@@ -6,7 +6,7 @@ interface FormValues {
   description: string;
   priority: Task["priority"];
   dueDate: string;
-  tags: string; // Comma-separated string; converted to array on submit
+  tags: string; 
   assignedTo: string;
 }
 
@@ -32,13 +32,10 @@ const defaultValues: FormValues = {
   assignedTo: "",
 };
 
-// Reusable form hook for both Create and Edit task pages.
-// Handles form state, validation (title + due date required), and reset.
-// Accepts optional initialValues to pre-populate the form when editing.
+
 export function useTaskForm(
   initialValues?: Partial<Task> | Partial<TaskListItem>,
 ): UseTaskFormReturn {
-  // Merge initial values (from an existing task) with defaults
   const startingValues: FormValues = useMemo(
     () => ({
       ...defaultValues,
@@ -48,7 +45,7 @@ export function useTaskForm(
           description: initialValues.description || "",
           priority: initialValues.priority || "medium",
           dueDate: initialValues.dueDate
-            ? initialValues.dueDate.slice(0, 10) // Extract YYYY-MM-DD from ISO string
+            ? initialValues.dueDate.slice(0, 10) 
             : "",
           tags: initialValues.tags?.join(", ") || "",
           assignedTo: initialValues.assignedTo || "",
@@ -61,13 +58,11 @@ export function useTaskForm(
   const [values, setValues] = useState<FormValues>(startingValues);
   const [errors, setErrors] = useState<FormErrors>({});
 
-  // Update a single field and clear its error
   const handleChange = useCallback((field: keyof FormValues, value: string) => {
     setValues((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }, []);
 
-  // Validate and submit — only calls onSubmit if validation passes
   const handleSubmit = useCallback(
     (onSubmit: (values: FormValues) => void) => {
       const newErrors: FormErrors = {};

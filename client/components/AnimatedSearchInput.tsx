@@ -5,9 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const PLACEHOLDERS = ["Search by task name...", "Search by assignee..."];
 
-const CHAR_INTERVAL = 55; // ms per character typing
-const PAUSE_DURATION = 2200; // ms to hold the full text
-const ERASE_INTERVAL = 30; // ms per character erasing
+const CHAR_INTERVAL = 55; 
+const PAUSE_DURATION = 2200; 
+const ERASE_INTERVAL = 30; 
 
 interface AnimatedSearchInputProps {
   value: string;
@@ -28,9 +28,8 @@ export default function AnimatedSearchInput({
 
   const currentText = PLACEHOLDERS[placeholderIndex];
 
-  // Animate placeholder text
   const animate = useCallback(() => {
-    if (isFocused.current || value) return; // pause animation when focused or has value
+    if (isFocused.current || value) return; 
 
     if (isTyping) {
       if (displayedPlaceholder.length < currentText.length) {
@@ -40,7 +39,6 @@ export default function AnimatedSearchInput({
           );
         }, CHAR_INTERVAL);
       } else {
-        // Pause at full text, then start erasing
         timerRef.current = setTimeout(() => {
           setIsTyping(false);
         }, PAUSE_DURATION);
@@ -53,7 +51,6 @@ export default function AnimatedSearchInput({
           );
         }, ERASE_INTERVAL);
       } else {
-        // Move to next placeholder
         setPlaceholderIndex((prev) => (prev + 1) % PLACEHOLDERS.length);
         setIsTyping(true);
       }
@@ -67,16 +64,14 @@ export default function AnimatedSearchInput({
     };
   }, [animate]);
 
-  // When focus/blur, handle placeholder visibility
   const handleFocus = () => {
     isFocused.current = true;
-    setDisplayedPlaceholder(currentText); // show full placeholder on focus
+    setDisplayedPlaceholder(currentText); 
   };
 
   const handleBlur = () => {
     isFocused.current = false;
     if (!value) {
-      // Restart animation from current text
       setDisplayedPlaceholder("");
       setIsTyping(true);
     }
@@ -84,7 +79,7 @@ export default function AnimatedSearchInput({
 
   return (
     <div className={cn("relative group", className)}>
-      {/* Search icon */}
+     
       <svg
         className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/50 transition-colors group-focus-within:text-primary/70"
         fill="none"
@@ -115,7 +110,7 @@ export default function AnimatedSearchInput({
         )}
       />
 
-      {/* Clear button */}
+
       {value && (
         <button
           onClick={() => onChange("")}

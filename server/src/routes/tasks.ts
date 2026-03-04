@@ -14,9 +14,6 @@ const router = Router();
 
 router.use(auth);
 
-// GET /api/tasks — List all tasks for the authenticated user with optional filters.
-// Supports query params: search, priority, dashboardId, status (column name).
-// Used by the task list page (not the Kanban board, which uses /dashboards/:id/board).
 router.get(
   "/",
   async (
@@ -32,14 +29,10 @@ router.get(
         return;
       }
 
-      // Build a MongoDB filter object dynamically based on provided query params
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const filter: any = { userId: req.userId };
       if (dashboardId) filter.dashboardId = dashboardId;
       if (priority && priority !== "all") filter.priority = priority;
 
-      // Status filtering: "status" refers to a column name (e.g. "ToDo", "In Progress").
-      // We find columns with that name, then filter tasks by those column IDs.
       if (status && status !== "all") {
         const matchingCols = await Column.find({
           name: status as string,
@@ -51,14 +44,13 @@ router.get(
           return;
         }
       }
-
-      // Populate columnId and dashboardId to include their names in the response
       const tasks = await Task.find(filter)
         .populate("columnId", "name type")
         .populate("dashboardId", "name")
         .sort({ createdAt: -1 });
 
-      // Text search is done in-memory (searches title, description, and assignee)
+// serch by title and assignee
+
       let result = tasks;
       if (search) {
         const q = (search as string).toLowerCase();
@@ -77,8 +69,6 @@ router.get(
   },
 );
 
-// GET /api/tasks/stats — Aggregated task counts for the dashboard summary cards.
-// Returns: total count, overdue count (excluding Done), and counts grouped by column name.
 router.get(
   "/stats",
   async (
@@ -89,13 +79,11 @@ router.get(
     try {
       const { dashboardId } = req.query;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const match: any = { userId: req.userId };
       if (dashboardId) match.dashboardId = dashboardId;
 
       const total = await Task.countDocuments(match);
 
-      // Overdue = tasks with dueDate in the past, excluding tasks in "Done" columns
       const doneColumns = await Column.find({ name: "Done" }).select("_id");
       const doneIds = doneColumns.map((c) => c._id);
 
@@ -104,15 +92,12 @@ router.get(
         dueDate: { $lt: new Date() },
         columnId: { $nin: doneIds },
       });
-
-      // Count tasks per column name (e.g. { "ToDo": 5, "In Progress": 3, "Done": 2 })
       const allTasks = await Task.find(match)
         .populate("columnId", "name")
         .select("columnId");
 
       const byColumn: Record<string, number> = {};
       for (const t of allTasks) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const colName =
           typeof t.columnId === "object" &&
             t.columnId !== null &&
@@ -129,9 +114,7 @@ router.get(
   },
 );
 
-// PUT /api/tasks/reorder — Bulk update task positions (and optionally columns).
-// Called after drag-and-drop to persist the new order to the database.
-// Must be defined BEFORE /:id so Express doesn't match "reorder" as a task ID.
+// for DND put api to reorder tasks
 router.put(
   "/reorder",
   async (
@@ -148,8 +131,6 @@ router.put(
         });
         return;
       }
-
-      // Build a columnId → columnName lookup for any column changes
       const columnIds = [
         ...new Set(
           tasks
@@ -167,7 +148,6 @@ router.put(
         }
       }
 
-      // Use bulkWrite for a single DB round-trip instead of N individual updates
       const bulkOps = tasks.map(
         (t: { id: string; position: number; columnId?: string }) => ({
           updateOne: {
@@ -192,7 +172,8 @@ router.put(
   },
 );
 
-// POST /api/tasks — Create a new task in a specific column of a dashboard
+//Create a new task in a specific column of a dashboard
+
 router.post(
   "/",
   async (
@@ -219,7 +200,6 @@ router.post(
         return;
       }
 
-      // Verify the dashboard belongs to the current user
       const dashboard = await Dashboard.findOne({
         _id: dashboardId,
         userId: req.userId,
@@ -228,8 +208,6 @@ router.post(
         res.status(404).json({ message: "Dashboard not found" });
         return;
       }
-
-      // Verify the column exists within this dashboard
       const column = await Column.findOne({
         _id: columnId,
         dashboardId,
@@ -239,7 +217,6 @@ router.post(
         return;
       }
 
-      // Place the new task at the bottom of the column
       const maxPosTask = await Task.findOne({ columnId }).sort({
         position: -1,
       });
@@ -266,7 +243,6 @@ router.post(
   },
 );
 
-// GET /api/tasks/:id — Get a single task with populated column and dashboard names
 router.get(
   "/:id",
   async (
@@ -284,7 +260,6 @@ router.get(
         return;
       }
 
-      // Only allow the task owner to view it
       if (task.userId.toString() !== req.userId) {
         res.status(404).json({ message: "Task not found" });
         return;
@@ -297,7 +272,7 @@ router.get(
   },
 );
 
-// PUT /api/tasks/:id — Update task fields (partial update)
+// Update task fields data
 router.put(
   "/:id",
   async (
@@ -306,7 +281,6 @@ router.put(
     next: NextFunction,
   ): Promise<void> => {
     try {
-      // Destructure out immutable fields to prevent clients from overwriting them
       const { _id, userId, createdAt, updatedAt, __v, ...updates } = req.body;
 
       const task = await Task.findById(req.params.id);
@@ -320,7 +294,6 @@ router.put(
         return;
       }
 
-      // If the task is being moved to a different column, update the denormalized columnName
       if (updates.columnId && updates.columnId !== task.columnId.toString()) {
         const newCol = await Column.findById(updates.columnId);
         if (newCol) {
@@ -328,8 +301,6 @@ router.put(
         }
       }
 
-      // Auto-generate or clear assigneeId when assignedTo changes.
-      // Same assignee name always gets the same ID for consistency.
       if ("assignedTo" in updates) {
         const trimmedAssignee = updates.assignedTo?.trim();
         if (trimmedAssignee) {
@@ -359,7 +330,7 @@ router.put(
   },
 );
 
-// DELETE /api/tasks/:id — Delete a task (ownership verified)
+// Delete a task 
 router.delete(
   "/:id",
   async (
@@ -388,8 +359,7 @@ router.delete(
   },
 );
 
-// PUT /api/tasks/:id/move — Move a task to a different column and/or position.
-// Used by drag-and-drop when moving a single task between columns.
+// Move a task to a different column position.
 router.put(
   "/:id/move",
   async (
@@ -418,7 +388,6 @@ router.put(
         return;
       }
 
-      // Look up the target column name for the denormalized field
       const column = await Column.findById(columnId);
 
       task.columnId = columnId;
@@ -433,7 +402,6 @@ router.put(
   },
 );
 
-// PUT /api/tasks/:id/star — Toggle the starred (favorite) status of a task
 router.put(
   "/:id/star",
   async (
@@ -453,7 +421,7 @@ router.put(
         return;
       }
 
-      // Simply flip the boolean
+      // Star and undo
       task.starred = !task.starred;
       await task.save();
 

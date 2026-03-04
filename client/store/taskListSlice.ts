@@ -3,19 +3,18 @@ import { TaskListItem, TaskStats } from "@/types/task";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 
-// Filters for the task list view — filters are sent as query params to the server
 export interface TaskFilters {
   search: string;
   priority: "all" | "low" | "medium" | "high";
   status: "all" | "To Do" | "In Progress" | "Done";
-  dashboardId: string; // empty string = all dashboards
+  dashboardId: string; 
 }
 
 interface TaskListState {
   tasks: TaskListItem[];
-  selectedTask: TaskListItem | null; // Task currently open in the detail modal
+  selectedTask: TaskListItem | null; 
   filters: TaskFilters;
-  stats: TaskStats | null; // Aggregated counts (total, overdue, by-column)
+  stats: TaskStats | null; 
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
@@ -39,8 +38,6 @@ function extractError(err: unknown, fallback: string): string {
   return axiosErr.response?.data?.message || fallback;
 }
 
-// GET /api/tasks — fetch tasks with server-side filtering.
-// Filters are converted to URL query params before sending.
 export const fetchAllTasks = createAsyncThunk(
   "taskList/fetchAllTasks",
   async (filters: Partial<TaskFilters> | undefined, { rejectWithValue }) => {
@@ -61,7 +58,6 @@ export const fetchAllTasks = createAsyncThunk(
   },
 );
 
-// GET /api/tasks/stats — fetch aggregated stats for the summary cards on the tasks page
 export const fetchTaskStats = createAsyncThunk(
   "taskList/fetchTaskStats",
   async (dashboardId: string | undefined, { rejectWithValue }) => {
@@ -77,7 +73,6 @@ export const fetchTaskStats = createAsyncThunk(
   },
 );
 
-// GET /api/tasks/:id — fetch a single task for the detail modal
 export const fetchTaskById = createAsyncThunk(
   "taskList/fetchTaskById",
   async (id: string, { rejectWithValue }) => {
@@ -90,8 +85,6 @@ export const fetchTaskById = createAsyncThunk(
   },
 );
 
-// PUT /api/tasks/:id — update a task, then re-fetch the populated version
-// so the list displays consistent data (with populated column/dashboard names)
 export const updateTaskFromList = createAsyncThunk(
   "taskList/updateTask",
   async (
@@ -120,8 +113,6 @@ export const deleteTaskFromList = createAsyncThunk(
   },
 );
 
-// POST /api/tasks — create a task, then re-fetch the populated version
-// (the POST response doesn't include populated column/dashboard names)
 export const createTaskFromList = createAsyncThunk(
   "taskList/createTask",
   async (
@@ -151,7 +142,6 @@ const taskListSlice = createSlice({
   name: "taskList",
   initialState,
   reducers: {
-    // Merge partial filter updates — triggers a debounced API call via useTaskFilters hook
     setFilters(state, action: PayloadAction<Partial<TaskFilters>>) {
       state.filters = { ...state.filters, ...action.payload };
     },
@@ -211,7 +201,6 @@ const taskListSlice = createSlice({
         const updated = action.payload;
         const idx = state.tasks.findIndex((t) => t._id === updated._id);
         if (idx !== -1) state.tasks[idx] = updated;
-        // Also update the modal if this task is currently open
         if (state.selectedTask?._id === updated._id) {
           state.selectedTask = updated;
         }
@@ -223,7 +212,6 @@ const taskListSlice = createSlice({
     builder
       .addCase(deleteTaskFromList.fulfilled, (state, action) => {
         state.tasks = state.tasks.filter((t) => t._id !== action.payload);
-        // Close the modal if the deleted task was open
         if (state.selectedTask?._id === action.payload) {
           state.selectedTask = null;
         }
@@ -232,7 +220,6 @@ const taskListSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Prepend new task so it appears first in the list
     builder
       .addCase(createTaskFromList.fulfilled, (state, action) => {
         state.tasks.unshift(action.payload);

@@ -75,7 +75,6 @@ export default function TaskCard({
       <div className="mb-2 flex items-center justify-between">
         <TaskStatusBadge columnName={columnName} size="sm" />
         <div className="flex items-center gap-1.5">
-          {/* Action buttons — visible on hover */}
           <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
             <Button
               variant="ghost"
@@ -208,7 +207,6 @@ export default function TaskCard({
         )}
       </div>
 
-      {/* Dashboard label */}
       {task.dashboardId?.name && (
         <div className="mt-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
           {task.dashboardId.name}

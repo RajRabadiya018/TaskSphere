@@ -5,15 +5,10 @@ import { useEffect, useState } from "react";
 interface ErrorBannerProps {
   message: string | null;
   onDismiss?: () => void;
-  /** Auto-dismiss after this many ms (0 = no auto-dismiss, default 5000) */
   autoDismissMs?: number;
   className?: string;
 }
 
-/**
- * A dismissible inline error banner for showing Redux/API error messages.
- * Renders nothing when `message` is null.
- */
 export default function ErrorBanner({
   message,
   onDismiss,

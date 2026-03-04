@@ -28,29 +28,23 @@ export default function BoardPage({ params }: PageProps) {
     (state: RootState) => state.dashboards,
   );
 
-  // Add task dialog
   const [addTaskOpen, setAddTaskOpen] = useState(false);
   const [addTaskColumnId, setAddTaskColumnId] = useState("");
 
-  // Task detail modal
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
 
-  // Search
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Add column
   const [addingColumn, setAddingColumn] = useState(false);
   const [newColumnName, setNewColumnName] = useState("");
 
-  // Fetch dashboards list if not loaded
   useEffect(() => {
     if (dashboards.length === 0) {
       dispatch(fetchDashboards());
     }
   }, [dispatch, dashboards.length]);
 
-  // Set active dashboard
   useEffect(() => {
     if (dashboards.length > 0) {
       const found = dashboards.find((d) => d._id === dashboardId);
@@ -60,7 +54,6 @@ export default function BoardPage({ params }: PageProps) {
     }
   }, [dashboards, dashboardId, dispatch, active]);
 
-  // Fetch board data
   useEffect(() => {
     dispatch(fetchBoard(dashboardId));
   }, [dispatch, dashboardId]);
@@ -152,7 +145,6 @@ export default function BoardPage({ params }: PageProps) {
 
   return (
     <div className="flex h-[calc(100vh-4.5rem)] flex-col overflow-hidden px-4 py-3 sm:px-6">
-      {/* Non-fatal error banner (e.g. failed task create, column rename, etc.) */}
       {status === "succeeded" && error && (
         <ErrorBanner
           message={error}
@@ -161,7 +153,6 @@ export default function BoardPage({ params }: PageProps) {
         />
       )}
 
-      {/* Header row — board name, search, add column */}
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10">
@@ -185,14 +176,12 @@ export default function BoardPage({ params }: PageProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Search bar */}
           <AnimatedSearchInput
             value={searchQuery}
             onChange={setSearchQuery}
             className="w-72"
           />
 
-          {/* Add column button */}
           {addingColumn ? (
             <div className="flex items-center gap-2">
               <Input
@@ -250,7 +239,6 @@ export default function BoardPage({ params }: PageProps) {
         </div>
       </div>
 
-      {/* Kanban board — fills remaining height */}
       <div className="min-h-0 flex-1">
         <KanbanBoard
           onAddTask={handleAddTask}
@@ -259,7 +247,6 @@ export default function BoardPage({ params }: PageProps) {
         />
       </div>
 
-      {/* Add Task dialog */}
       <AddTaskDialog
         open={addTaskOpen}
         onClose={() => setAddTaskOpen(false)}
@@ -268,7 +255,6 @@ export default function BoardPage({ params }: PageProps) {
         columnName={addTaskColumnName}
       />
 
-      {/* Task detail modal */}
       <TaskDetailModal
         open={detailOpen}
         onClose={() => {

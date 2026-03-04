@@ -18,14 +18,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // If already logged in, redirect to home
   useEffect(() => {
     if (user) {
       router.replace("/");
     }
   }, [user, router]);
 
-  // Clear errors on unmount
   useEffect(() => {
     return () => {
       dispatch(clearAuthError());
@@ -41,14 +39,11 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
-      {/* ── Left Panel — Branding & Illustration ── */}
       <div className="relative hidden w-1/2 overflow-hidden bg-foreground lg:flex lg:flex-col lg:justify-between">
-        {/* Decorative gradient blobs */}
         <div className="pointer-events-none absolute -left-24 -top-24 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 -right-32 h-125 w-125 rounded-full bg-violet-500/15 blur-3xl" />
         <div className="pointer-events-none absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-emerald-500/10 blur-3xl" />
 
-        {/* Subtle grid pattern overlay */}
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.04]"
           style={{
@@ -58,7 +53,6 @@ export default function LoginPage() {
           }}
         />
 
-        {/* Top — Logo */}
         <div className="relative z-10 p-10">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-background/10 backdrop-blur-sm">
@@ -70,11 +64,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Center — Illustration */}
         <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-12">
-          {/* Floating card illustrations */}
           <div className="relative w-full max-w-sm">
-            {/* Card 1 */}
             <div className="absolute -left-4 -top-8 w-64 -rotate-6 rounded-xl border border-background/10 bg-background/7 p-4 backdrop-blur-md shadow-2xl">
               <div className="mb-3 flex items-center gap-2">
                 <div className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
@@ -90,7 +81,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Card 2 */}
             <div className="absolute -right-6 top-12 w-56 rotate-4 rounded-xl border border-background/10 bg-background/7 p-4 backdrop-blur-md shadow-2xl">
               <div className="mb-3 flex items-center gap-2">
                 <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
@@ -106,7 +96,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Card 3 — center */}
             <div className="relative mx-auto mt-16 w-72 rounded-xl border border-background/10 bg-background/9 p-5 backdrop-blur-md shadow-2xl">
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -139,7 +128,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Bottom — Testimonial / tagline */}
         <div className="relative z-10 p-10">
           <blockquote className="space-y-2">
             <p className="text-sm leading-relaxed text-background/60">
@@ -156,12 +144,9 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Right Panel — Login Form ── */}
       <div className="flex w-full flex-col justify-center px-6 sm:px-12 lg:w-1/2 lg:px-20">
         <div className="mx-auto w-full max-w-md space-y-8">
-          {/* Header */}
           <div className="text-center lg:text-left">
-            {/* Mobile logo */}
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-foreground lg:hidden">
               <span className="text-lg font-bold text-background">TS</span>
             </div>

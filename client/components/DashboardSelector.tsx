@@ -18,7 +18,6 @@ export default function DashboardSelector() {
     const [open, setOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // Extract active dashboard ID from URL
     const activeDashboardId = pathname.startsWith("/board/")
         ? pathname.split("/board/")[1]?.split("/")[0]
         : null;
@@ -27,14 +26,12 @@ export default function DashboardSelector() {
         (d) => d._id === activeDashboardId
     );
 
-    // Fetch dashboards on mount if not loaded
     useEffect(() => {
         if (status === "idle") {
             dispatch(fetchDashboards());
         }
     }, [dispatch, status]);
 
-    // Close on outside click
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (
@@ -49,7 +46,6 @@ export default function DashboardSelector() {
             document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Close on Escape
     useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === "Escape") setOpen(false);

@@ -90,7 +90,6 @@ export default function KanbanTaskCard({
         if (!isDragging) onOpen(task);
       }}
     >
-      {/* Priority + Star row */}
       <div className="mb-2.5 flex items-center justify-between">
         <span
           className={cn(
@@ -133,19 +132,16 @@ export default function KanbanTaskCard({
         </Button>
       </div>
 
-      {/* Title */}
       <h4 className="mb-2 text-[15px] font-semibold leading-snug text-foreground line-clamp-2">
         {task.title}
       </h4>
-
-      {/* Description preview */}
+   
       {task.description && (
         <p className="mb-3 text-[13px] leading-relaxed text-muted-foreground line-clamp-2">
           {task.description}
         </p>
       )}
 
-      {/* Tags */}
       {task.tags.length > 0 && (
         <div className="mb-3 flex flex-wrap gap-1">
           {task.tags.slice(0, 3).map((tag) => (
@@ -165,7 +161,6 @@ export default function KanbanTaskCard({
         </div>
       )}
 
-      {/* Footer: due date + assigned */}
       <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
         {task.dueDate ? (
           <span

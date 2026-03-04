@@ -151,7 +151,6 @@ export default function DashboardsPage() {
       setNewName("");
       setShowCreate(false);
     } catch {
-      // Error is set in Redux state → displayed by ErrorBanner above
     } finally {
       setCreating(false);
     }
@@ -166,7 +165,6 @@ export default function DashboardsPage() {
       setRenamingId(null);
       setRenameValue("");
     } catch {
-      // Error is set in Redux state → displayed by ErrorBanner above
     }
   };
 
@@ -175,7 +173,6 @@ export default function DashboardsPage() {
     try {
       await dispatch(deleteDashboard(deleteTarget.id)).unwrap();
     } catch {
-      // Error is set in Redux state → displayed by ErrorBanner above
     }
     setDeleteTarget(null);
   };
@@ -202,7 +199,6 @@ export default function DashboardsPage() {
 
   return (
     <div className="flex flex-col gap-4 min-h-[calc(100vh-72px-3rem)]">
-      {/* Non-fatal error banner */}
       {error && status !== "failed" && (
         <ErrorBanner
           message={error}
@@ -210,9 +206,7 @@ export default function DashboardsPage() {
         />
       )}
 
-      {/* Hero Banner */}
       <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-linear-to-br from-primary/6 via-background to-accent/8">
-        {/* Decorative blurred circles */}
         <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
         <div className="pointer-events-none absolute -left-16 -bottom-16 h-36 w-36 rounded-full bg-violet-500/10 blur-3xl" />
 
@@ -230,7 +224,6 @@ export default function DashboardsPage() {
             </p>
           </div>
 
-          {/* Stats pills */}
           <div className="flex items-center gap-3">
             <div className="flex flex-col items-center rounded-xl border border-border/50 bg-card/80 backdrop-blur px-5 py-2.5 shadow-sm">
               <span className="text-xl font-bold tabular-nums">
@@ -265,7 +258,6 @@ export default function DashboardsPage() {
         </div>
       </div>
 
-      {/* Create Dashboard Inline */}
       {showCreate && (
         <div className="rounded-xl border border-border bg-card p-5 transition-all">
           <p className="mb-3 text-sm font-medium text-foreground">
@@ -312,9 +304,7 @@ export default function DashboardsPage() {
         </div>
       )}
 
-      {/* Boards Section */}
       <div className="flex-1 flex flex-col gap-3">
-        {/* Section header with search */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-base font-semibold tracking-tight">My Boards</h2>
           <div className="relative group w-full sm:w-72">
@@ -361,7 +351,6 @@ export default function DashboardsPage() {
           </div>
         </div>
 
-        {/* Dashboard grid */}
         {filteredDashboards.length > 0 ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -406,11 +395,9 @@ export default function DashboardsPage() {
                       }
                     }}
                   >
-                    {/* Gradient accent bar at top */}
                     <div className={`h-1 w-full bg-linear-to-r ${accent}`} />
 
                     <div className="px-4 py-3.5">
-                      {/* Card header */}
                       <div className="mb-3 flex items-center gap-3">
                         <div
                           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${iconColor}`}
@@ -430,7 +417,6 @@ export default function DashboardsPage() {
                           </svg>
                         </div>
 
-                        {/* Name / Rename input */}
                         <div className="min-w-0 flex-1">
                           {renamingId === dashboard._id ? (
                             <div className="flex items-center gap-2">
@@ -506,7 +492,6 @@ export default function DashboardsPage() {
                           )}
                         </div>
 
-                        {/* Action buttons — inline, hidden until hover */}
                         {renamingId !== dashboard._id && (
                           <div className="flex shrink-0 gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                             <Button
@@ -717,7 +702,6 @@ export default function DashboardsPage() {
         )}
       </div>
 
-      {/* Feature Highlights */}
       <div className="mt-auto grid gap-2.5 sm:grid-cols-3 pt-1">
         {FEATURES.map((f) => (
           <div
@@ -739,7 +723,6 @@ export default function DashboardsPage() {
         ))}
       </div>
 
-      {/* Delete confirmation */}
       <ConfirmDialog
         open={!!deleteTarget}
         title="Delete Dashboard"

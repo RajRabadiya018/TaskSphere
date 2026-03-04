@@ -26,7 +26,6 @@ export default function StyledSelect({
 
   const selected = options.find((o) => o.value === value);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -38,7 +37,6 @@ export default function StyledSelect({
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  // Close on Escape
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
@@ -50,7 +48,7 @@ export default function StyledSelect({
 
   return (
     <div ref={ref} className={cn("relative", className)}>
-      {/* Trigger */}
+      
       <button
         type="button"
         onClick={() => setOpen((p) => !p)}
@@ -84,7 +82,6 @@ export default function StyledSelect({
         </svg>
       </button>
 
-      {/* Dropdown */}
       {open && (
         <div className="absolute z-50 mt-1.5 w-full rounded-xl border border-border/60 bg-popover p-1 shadow-lg animate-in fade-in-0 zoom-in-95 duration-150">
           {options.map((opt) => (

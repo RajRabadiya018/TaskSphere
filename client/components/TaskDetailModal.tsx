@@ -46,7 +46,6 @@ export default function TaskDetailModal({
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
 
-  // Edit form state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
@@ -54,7 +53,6 @@ export default function TaskDetailModal({
   const [tagsInput, setTagsInput] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
 
-  // Sync form when task changes
   useEffect(() => {
     if (task) {
       setTitle(task.title);
@@ -143,7 +141,6 @@ export default function TaskDetailModal({
           </DialogHeader>
 
           {editing ? (
-            /* ── Edit Mode ── */
             <div className="space-y-4">
               {modalError && (
                 <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -238,9 +235,7 @@ export default function TaskDetailModal({
               </DialogFooter>
             </div>
           ) : (
-            /* ── View Mode ── */
             <div className="space-y-5">
-              {/* Title + Priority */}
               <div>
                 <div className="mb-2.5 flex items-center gap-2">
                   <span
@@ -265,7 +260,6 @@ export default function TaskDetailModal({
                 </h2>
               </div>
 
-              {/* Description */}
               {task.description && (
                 <div>
                   <h4 className="mb-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -277,7 +271,6 @@ export default function TaskDetailModal({
                 </div>
               )}
 
-              {/* Metadata grid */}
               <div className="grid grid-cols-2 gap-4 rounded-lg bg-muted/50 p-4">
                 {task.dueDate && (
                   <div>
@@ -317,7 +310,6 @@ export default function TaskDetailModal({
                 </div>
               </div>
 
-              {/* Tags */}
               {task.tags.length > 0 && (
                 <div>
                   <h4 className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -333,7 +325,6 @@ export default function TaskDetailModal({
                 </div>
               )}
 
-              {/* Actions */}
               <div className="flex gap-2 pt-2 border-t border-border">
                 <Button
                   variant="outline"

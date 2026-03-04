@@ -15,19 +15,16 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     const { user, token, status } = useSelector((state: RootState) => state.auth);
 
     useEffect(() => {
-        // If no token at all, redirect immediately
+        // If no token redirect
         if (!token) {
             router.replace("/login");
             return;
         }
-
-        // If we have a token but no user yet, and loading finished with no user → redirect
         if (!user && status !== "loading" && status !== "idle") {
             router.replace("/login");
         }
     }, [user, token, status, router]);
 
-    // Still loading user data
     if (status === "loading" || (token && !user && status === "idle")) {
         return (
             <div className="flex min-h-[60vh] items-center justify-center">
@@ -35,8 +32,6 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
             </div>
         );
     }
-
-    // No token or no user after loading → don't render children
     if (!token || !user) {
         return null;
     }

@@ -1,18 +1,15 @@
 import { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
-// Extend Express Request to carry the authenticated user's ID
 export interface AuthRequest extends Request {
     userId?: string;
 }
 
-// JWT verification middleware — extracts the token from the Authorization header,
-// verifies it, and attaches userId to the request for downstream route handlers
+// JWT verification
 const auth = (req: AuthRequest, res: Response, next: NextFunction): void => {
     try {
         const authHeader = req.headers.authorization;
 
-        // Expect format: "Bearer <token>"
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
             res.status(401).json({ message: "No token provided, authorization denied" });
             return;
@@ -30,12 +27,11 @@ const auth = (req: AuthRequest, res: Response, next: NextFunction): void => {
             throw new Error("JWT_SECRET is not defined in environment variables");
         }
 
-        // Verify token and extract userId payload
+        // Verifing token
         const decoded = jwt.verify(token, secret) as { userId: string };
         req.userId = decoded.userId;
         next();
     } catch (error: any) {
-        // Handle specific JWT errors with user-friendly messages
         if (error.name === "TokenExpiredError") {
             res.status(401).json({ message: "Token has expired" });
             return;

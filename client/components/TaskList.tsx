@@ -59,7 +59,6 @@ export default function TaskList() {
 
   return (
     <>
-      {/* Delete error banner */}
       {deleteError && (
         <div className="mb-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive flex items-center justify-between">
           <span>{deleteError}</span>

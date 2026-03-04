@@ -51,10 +51,8 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
         />
       </div>
 
-      {/* Divider */}
       <div className="h-px bg-border/50" />
 
-      {/* Dashboard filter */}
       <div>
         <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <svg
@@ -82,7 +80,6 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
         />
       </div>
 
-      {/* Status filter */}
       <div>
         <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <svg
@@ -114,7 +111,6 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
         />
       </div>
 
-      {/* Priority filter */}
       <div>
         <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <svg
@@ -146,7 +142,6 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
         />
       </div>
 
-      {/* Clear Filters */}
       {isFiltered && (
         <>
           <div className="h-px bg-border/50" />

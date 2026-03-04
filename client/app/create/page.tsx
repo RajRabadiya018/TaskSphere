@@ -33,7 +33,6 @@ export default function CreateTaskPage() {
   const [columns, setColumns] = useState<ColumnOption[]>([]);
   const [loadingColumns, setLoadingColumns] = useState(false);
 
-  // Fetch dashboards on mount
   useEffect(() => {
     if (dashboards.length === 0) dispatch(fetchDashboards());
   }, [dispatch, dashboards.length]);
@@ -51,7 +50,6 @@ export default function CreateTaskPage() {
       .then((res) => {
         const cols = (res.data.columns || []) as ColumnOption[];
         setColumns(cols);
-        // Auto-select the first column (usually ToDo)
         if (cols.length > 0) setSelectedColumnId(cols[0]._id);
         else setSelectedColumnId("");
       })
@@ -135,7 +133,6 @@ export default function CreateTaskPage() {
             </div>
           )}
 
-          {/* Dashboard + Column selection */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dashboard">Dashboard *</Label>

@@ -3,13 +3,11 @@
 import { cn } from "@/lib/utils";
 
 interface TaskStatusBadgeProps {
-  /** Column name to display as the task's status */
   columnName: string;
   size?: "sm" | "md" | "lg";
   className?: string;
 }
 
-/** Map well-known column names to colour tokens. Custom names get a neutral style. */
 function getColumnStyle(name: string) {
   const lower = name.toLowerCase();
   if (lower === "done" || lower === "completed")
@@ -30,7 +28,6 @@ function getColumnStyle(name: string) {
       dot: "bg-zinc-400",
       pulse: false,
     };
-  // Fallback for custom columns
   return {
     bg: "bg-violet-500/20 text-violet-400 border-violet-500/30",
     dot: "bg-violet-400",

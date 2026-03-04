@@ -8,8 +8,6 @@ const router = Router();
 
 router.use(auth);
 
-// PUT /api/columns/reorder — Bulk update column positions.
-// Must be defined BEFORE /:id so Express doesn't match "reorder" as a column ID.
 router.put(
   "/reorder",
   async (
@@ -27,7 +25,6 @@ router.put(
         return;
       }
 
-      // Use bulkWrite for efficient batch updates instead of multiple individual queries
       const bulkOps = columns.map((col: { id: string; position: number }) => ({
         updateOne: {
           filter: { _id: col.id },
@@ -44,7 +41,6 @@ router.put(
   },
 );
 
-// POST /api/columns — Create a new custom column in a dashboard
 router.post(
   "/",
   async (
@@ -62,7 +58,6 @@ router.post(
         return;
       }
 
-      // Verify the dashboard belongs to the authenticated user
       const dashboard = await Dashboard.findOne({
         _id: dashboardId,
         userId: req.userId,
@@ -72,7 +67,6 @@ router.post(
         return;
       }
 
-      // Place the new column at the end by finding the current highest position
       const maxPosCol = await Column.findOne({ dashboardId }).sort({
         position: -1,
       });
@@ -92,7 +86,6 @@ router.post(
   },
 );
 
-// PUT /api/columns/:id — Rename a column and sync the columnName on all its tasks
 router.put(
   "/:id",
   async (
@@ -113,8 +106,6 @@ router.put(
         res.status(404).json({ message: "Column not found" });
         return;
       }
-
-      // Verify ownership through the parent dashboard
       const dashboard = await Dashboard.findOne({
         _id: column.dashboardId,
         userId: req.userId,
@@ -127,7 +118,6 @@ router.put(
       column.name = name.trim();
       await column.save();
 
-      // Keep the denormalized columnName field on tasks in sync with the column name
       await Task.updateMany(
         { columnId: column._id },
         { columnName: column.name },
@@ -140,9 +130,6 @@ router.put(
   },
 );
 
-// DELETE /api/columns/:id — Delete a custom column.
-// Default columns (ToDo, In Progress, Done) cannot be deleted.
-// Tasks in the deleted column are moved to the first default column (ToDo).
 router.delete(
   "/:id",
   async (
@@ -157,7 +144,6 @@ router.delete(
         return;
       }
 
-      // Prevent deletion of default columns to maintain board structure
       if (column.type === "default") {
         res.status(400).json({
           message: "Default columns cannot be deleted",
@@ -174,7 +160,6 @@ router.delete(
         return;
       }
 
-      // Move orphaned tasks to the first default column so no tasks are lost
       const todoColumn = await Column.findOne({
         dashboardId: column.dashboardId,
         type: "default",

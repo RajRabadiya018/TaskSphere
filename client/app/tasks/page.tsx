@@ -22,7 +22,7 @@ export default function TasksPage() {
     dispatch(fetchAllTasks(filters));
     dispatch(fetchTaskStats(undefined));
     dispatch(fetchDashboards());
-  }, [dispatch]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dispatch]); // dispathing
 
   const handleDismissError = useCallback(() => {
     dispatch(clearTaskListError());
@@ -30,11 +30,9 @@ export default function TasksPage() {
 
   return (
     <div className="space-y-4">
-      {/* Non-fatal error banner */}
       {error && status !== "failed" && (
         <ErrorBanner message={error} onDismiss={handleDismissError} />
       )}
-      {/* Summary Cards */}
       {stats && (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <SummaryCard
@@ -131,7 +129,6 @@ export default function TasksPage() {
   );
 }
 
-/* ---------- Summary Card ---------- */
 function SummaryCard({
   label,
   value,

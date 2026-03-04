@@ -73,7 +73,6 @@ export default function TaskDetailView({ task }: TaskDetailViewProps) {
         Back to Tasks
       </Link>
       <div className="rounded-xl border border-border bg-card p-8">
-        {/* Header badges */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <TaskStatusBadge columnName={columnName} size="lg" />

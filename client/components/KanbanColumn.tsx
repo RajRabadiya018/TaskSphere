@@ -35,13 +35,11 @@ export default function KanbanColumn({
 }: KanbanColumnProps) {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Local state for column rename, delete confirmation, and menu dropdown
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(column.name);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Make the column itself sortable (for column drag-and-drop reordering)
   const {
     attributes: colAttributes,
     listeners: colListeners,
@@ -59,9 +57,8 @@ export default function KanbanColumn({
     transition: colTransition,
   };
 
-  // Also make the column a droppable zone so tasks can be dropped into it
   const { setNodeRef: setDropRef } = useDroppable({
-    id: column._id,
+    id: `drop-${column._id}`,
     data: { type: "column" },
   });
 
@@ -79,7 +76,6 @@ export default function KanbanColumn({
         renameColumn({ id: column._id, name: renameValue.trim() }),
       ).unwrap();
     } catch {
-      // Error flows to Redux state → displayed by board ErrorBanner
     }
     setIsRenaming(false);
   };
@@ -93,7 +89,6 @@ export default function KanbanColumn({
         }),
       ).unwrap();
     } catch {
-      // Error flows to Redux state → displayed by board ErrorBanner
     }
     setDeleteConfirm(false);
   };
@@ -106,7 +101,6 @@ export default function KanbanColumn({
         className={`flex w-75 min-w-67.5 flex-1 shrink-0 flex-col rounded-xl bg-muted/30 border border-border/40 transition-all duration-200 overflow-hidden hover:border-border/60 ${isColDragging ? "opacity-40 scale-[0.98]" : ""
           }`}
       >
-        {/* Column header — drag handle for column reorder */}
         <div
           className="flex items-center justify-between px-4 py-3.5 cursor-grab active:cursor-grabbing border-b border-border/30"
           {...colAttributes}
@@ -142,7 +136,6 @@ export default function KanbanColumn({
             </span>
           </div>
 
-          {/* Column actions */}
           <div
             className="flex items-center gap-0.5 shrink-0"
             onPointerDown={(e) => e.stopPropagation()}
@@ -172,7 +165,6 @@ export default function KanbanColumn({
               </svg>
             </Button>
 
-            {/* Column menu */}
             <div className="relative">
               <Button
                 variant="ghost"
@@ -256,7 +248,6 @@ export default function KanbanColumn({
           </div>
         </div>
 
-        {/* Task list — droppable zone */}
         <div
           ref={setDropRef}
           className="flex flex-1 flex-col gap-3 overflow-y-auto px-3 pb-3 scrollbar-none min-h-15"
@@ -322,7 +313,6 @@ export default function KanbanColumn({
         </div>
       </div>
 
-      {/* Delete column confirm */}
       <ConfirmDialog
         open={deleteConfirm}
         title="Delete Column"

@@ -5,7 +5,7 @@ import { AxiosError } from "axios";
 
 interface DashboardState {
   dashboards: Dashboard[];
-  activeDashboard: Dashboard | null; // Currently selected dashboard (used by DashboardSelector)
+  activeDashboard: Dashboard | null; 
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
@@ -17,7 +17,7 @@ const initialState: DashboardState = {
   error: null,
 };
 
-// GET /api/dashboards — fetch all dashboards for the current user
+// fetch all dashboards for user
 export const fetchDashboards = createAsyncThunk(
   "dashboards/fetchDashboards",
   async (_, { rejectWithValue }) => {
@@ -33,7 +33,7 @@ export const fetchDashboards = createAsyncThunk(
   },
 );
 
-// POST /api/dashboards — create a new dashboard
+// create a new dashboard
 export const createDashboard = createAsyncThunk(
   "dashboards/createDashboard",
   async (data: { name: string }, { rejectWithValue }) => {
@@ -49,7 +49,7 @@ export const createDashboard = createAsyncThunk(
   },
 );
 
-// PUT /api/dashboards/:id — rename a dashboard
+//  rename a dashboard
 export const renameDashboard = createAsyncThunk(
   "dashboards/renameDashboard",
   async (data: { id: string; name: string }, { rejectWithValue }) => {
@@ -67,7 +67,7 @@ export const renameDashboard = createAsyncThunk(
   },
 );
 
-// DELETE /api/dashboards/:id — delete a dashboard (server cascades columns & tasks)
+// delete a dashboard
 export const deleteDashboard = createAsyncThunk(
   "dashboards/deleteDashboard",
   async (id: string, { rejectWithValue }) => {
@@ -109,7 +109,6 @@ const dashboardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // New dashboards are prepended so they appear first in the list
     builder
       .addCase(createDashboard.fulfilled, (state, action) => {
         state.dashboards.unshift(action.payload);
@@ -126,7 +125,6 @@ const dashboardSlice = createSlice({
         if (index !== -1) {
           state.dashboards[index] = action.payload;
         }
-        // Also update activeDashboard if it was the one renamed
         if (state.activeDashboard?._id === action.payload._id) {
           state.activeDashboard = action.payload;
         }
@@ -140,7 +138,6 @@ const dashboardSlice = createSlice({
         state.dashboards = state.dashboards.filter(
           (d) => d._id !== action.payload,
         );
-        // Clear activeDashboard if it was the one deleted
         if (state.activeDashboard?._id === action.payload) {
           state.activeDashboard = null;
         }

@@ -14,10 +14,9 @@ interface AuthState {
     token: string | null;
     status: "idle" | "loading" | "succeeded" | "failed";
     error: string | null;
-    _hydrated: boolean; // true once token has been read from localStorage
+    _hydrated: boolean; 
 }
 
-// Token starts null; AuthLoader component hydrates it from localStorage on mount
 const initialState: AuthState = {
     user: null,
     token: null,
@@ -26,7 +25,6 @@ const initialState: AuthState = {
     _hydrated: false,
 };
 
-// POST /api/auth/signup — register and store the returned JWT in localStorage
 export const signupUser = createAsyncThunk(
     "auth/signup",
     async (
@@ -47,7 +45,6 @@ export const signupUser = createAsyncThunk(
     }
 );
 
-// POST /api/auth/login — authenticate and store the returned JWT
 export const loginUser = createAsyncThunk(
     "auth/login",
     async (
@@ -68,8 +65,7 @@ export const loginUser = createAsyncThunk(
     }
 );
 
-// GET /api/auth/me — verify the stored token is still valid and load user profile.
-// Called on app startup by AuthLoader to restore the session.
+
 export const loadUser = createAsyncThunk(
     "auth/loadUser",
     async (_, { rejectWithValue }) => {
@@ -77,7 +73,6 @@ export const loadUser = createAsyncThunk(
             const res = await api.get("/auth/me");
             return res.data.user as AuthUser;
         } catch {
-            // Token invalid or expired — clear it so the user gets redirected to login
             localStorage.removeItem("token");
             return rejectWithValue("Session expired");
         }
@@ -88,7 +83,6 @@ const authSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {
-        // Called once by AuthLoader on mount to read the JWT from localStorage into Redux state
         hydrateToken(state) {
             if (!state._hydrated) {
                 const stored = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -96,7 +90,6 @@ const authSlice = createSlice({
                 state._hydrated = true;
             }
         },
-        // Clear all auth state and remove token from localStorage
         logout(state) {
             state.user = null;
             state.token = null;
@@ -153,7 +146,6 @@ const authSlice = createSlice({
                 state.error = null;
             })
             .addCase(loadUser.rejected, (state) => {
-                // Token was invalid — reset to logged-out state
                 state.status = "idle";
                 state.user = null;
                 state.token = null;

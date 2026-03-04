@@ -1,4 +1,3 @@
-
 function SkeletonCard() {
     return (
         <div className="animate-pulse rounded-xl border border-border bg-card p-4">

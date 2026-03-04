@@ -29,7 +29,6 @@ const dashboardSchema = new Schema<IDashboard>(
     }
 );
 
-// Compound index: speeds up listing dashboards for a specific user sorted by creation date
 dashboardSchema.index({ userId: 1, createdAt: -1 });
 
 const Dashboard = mongoose.model<IDashboard>("Dashboard", dashboardSchema);
