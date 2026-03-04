@@ -1,0 +1,267 @@
+import api from "@/lib/api";
+import { TaskListItem, TaskStats } from "@/types/task";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { AxiosError } from "axios";
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+export interface TaskFilters {
+  search: string;
+  priority: "all" | "low" | "medium" | "high";
+  status: "all" | "To Do" | "In Progress" | "Done";
+  dashboardId: string; // "" = all dashboards
+}
+
+interface TaskListState {
+  tasks: TaskListItem[];
+  selectedTask: TaskListItem | null;
+  filters: TaskFilters;
+  stats: TaskStats | null;
+  status: "idle" | "loading" | "succeeded" | "failed";
+  error: string | null;
+}
+
+const initialState: TaskListState = {
+  tasks: [],
+  selectedTask: null,
+  filters: {
+    search: "",
+    priority: "all",
+    status: "all",
+    dashboardId: "",
+  },
+  stats: null,
+  status: "idle",
+  error: null,
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+function extractError(err: unknown, fallback: string): string {
+  const axiosErr = err as AxiosError<{ message?: string }>;
+  return axiosErr.response?.data?.message || fallback;
+}
+
+// ---------------------------------------------------------------------------
+// Thunks
+// ---------------------------------------------------------------------------
+
+/** GET /api/tasks — Fetch all tasks (with optional filters) */
+export const fetchAllTasks = createAsyncThunk(
+  "taskList/fetchAllTasks",
+  async (filters: Partial<TaskFilters> | undefined, { rejectWithValue }) => {
+    try {
+      const params: Record<string, string> = {};
+      if (filters?.search) params.search = filters.search;
+      if (filters?.priority && filters.priority !== "all")
+        params.priority = filters.priority;
+      if (filters?.status && filters.status !== "all")
+        params.status = filters.status;
+      if (filters?.dashboardId) params.dashboardId = filters.dashboardId;
+
+      const res = await api.get("/tasks", { params });
+      return res.data as TaskListItem[];
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to fetch tasks"));
+    }
+  },
+);
+
+/** GET /api/tasks/stats — Fetch task stats */
+export const fetchTaskStats = createAsyncThunk(
+  "taskList/fetchTaskStats",
+  async (dashboardId: string | undefined, { rejectWithValue }) => {
+    try {
+      const params: Record<string, string> = {};
+      if (dashboardId) params.dashboardId = dashboardId;
+
+      const res = await api.get("/tasks/stats", { params });
+      return res.data as TaskStats;
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to fetch task stats"));
+    }
+  },
+);
+
+/** GET /api/tasks/:id — Fetch single task */
+export const fetchTaskById = createAsyncThunk(
+  "taskList/fetchTaskById",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await api.get(`/tasks/${id}`);
+      return res.data as TaskListItem;
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Task not found"));
+    }
+  },
+);
+
+/** PUT /api/tasks/:id — Update a task (from the list view) */
+export const updateTaskFromList = createAsyncThunk(
+  "taskList/updateTask",
+  async (
+    { id, updates }: { id: string; updates: Record<string, unknown> },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await api.put(`/tasks/${id}`, updates);
+      // Re-fetch the populated version so the list stays consistent
+      const populated = await api.get(`/tasks/${id}`);
+      return populated.data as TaskListItem;
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to update task"));
+    }
+  },
+);
+
+/** DELETE /api/tasks/:id — Delete a task (from the list view) */
+export const deleteTaskFromList = createAsyncThunk(
+  "taskList/deleteTask",
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await api.delete(`/tasks/${id}`);
+      return id;
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to delete task"));
+    }
+  },
+);
+
+/** POST /api/tasks — Create a task (from the list/create page) */
+export const createTaskFromList = createAsyncThunk(
+  "taskList/createTask",
+  async (
+    data: {
+      columnId: string;
+      dashboardId: string;
+      title: string;
+      description?: string;
+      priority?: string;
+      dueDate?: string;
+      tags?: string[];
+      assignedTo?: string;
+    },
+    { rejectWithValue },
+  ) => {
+    try {
+      const res = await api.post("/tasks", data);
+      // Re-fetch populated version
+      const populated = await api.get(`/tasks/${res.data._id}`);
+      return populated.data as TaskListItem;
+    } catch (err) {
+      return rejectWithValue(extractError(err, "Failed to create task"));
+    }
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Slice
+// ---------------------------------------------------------------------------
+const taskListSlice = createSlice({
+  name: "taskList",
+  initialState,
+  reducers: {
+    setFilters(state, action: PayloadAction<Partial<TaskFilters>>) {
+      state.filters = { ...state.filters, ...action.payload };
+    },
+    clearFilters(state) {
+      state.filters = {
+        search: "",
+        priority: "all",
+        status: "all",
+        dashboardId: "",
+      };
+    },
+    setSelectedTask(state, action: PayloadAction<TaskListItem | null>) {
+      state.selectedTask = action.payload;
+    },
+    clearTaskList(state) {
+      state.tasks = [];
+      state.status = "idle";
+      state.error = null;
+    },
+    clearTaskListError(state) {
+      state.error = null;
+    },
+  },
+  extraReducers: (builder) => {
+    // --- fetchAllTasks ---
+    builder
+      .addCase(fetchAllTasks.pending, (state) => {
+        state.status = "loading";
+        state.error = null;
+      })
+      .addCase(fetchAllTasks.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.tasks = action.payload;
+      })
+      .addCase(fetchAllTasks.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload as string;
+      });
+
+    // --- fetchTaskStats ---
+    builder
+      .addCase(fetchTaskStats.fulfilled, (state, action) => {
+        state.stats = action.payload;
+      })
+      .addCase(fetchTaskStats.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // --- fetchTaskById ---
+    builder
+      .addCase(fetchTaskById.fulfilled, (state, action) => {
+        state.selectedTask = action.payload;
+      })
+      .addCase(fetchTaskById.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // --- updateTaskFromList ---
+    builder
+      .addCase(updateTaskFromList.fulfilled, (state, action) => {
+        const updated = action.payload;
+        const idx = state.tasks.findIndex((t) => t._id === updated._id);
+        if (idx !== -1) state.tasks[idx] = updated;
+        if (state.selectedTask?._id === updated._id) {
+          state.selectedTask = updated;
+        }
+      })
+      .addCase(updateTaskFromList.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // --- deleteTaskFromList ---
+    builder
+      .addCase(deleteTaskFromList.fulfilled, (state, action) => {
+        state.tasks = state.tasks.filter((t) => t._id !== action.payload);
+        if (state.selectedTask?._id === action.payload) {
+          state.selectedTask = null;
+        }
+      })
+      .addCase(deleteTaskFromList.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+
+    // --- createTaskFromList ---
+    builder
+      .addCase(createTaskFromList.fulfilled, (state, action) => {
+        state.tasks.unshift(action.payload);
+      })
+      .addCase(createTaskFromList.rejected, (state, action) => {
+        state.error = action.payload as string;
+      });
+  },
+});
+
+export const {
+  setFilters,
+  clearFilters,
+  setSelectedTask,
+  clearTaskList,
+  clearTaskListError,
+} = taskListSlice.actions;
+export default taskListSlice.reducer;
