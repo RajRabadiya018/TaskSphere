@@ -1,22 +1,16 @@
 import axios from "axios";
 
-/**
- * Axios instance pre-configured for the Task Manager backend API.
- *
- * Base URL points to the Express server at http://localhost:5000/api.
- * The auth token (JWT) is attached automatically via an interceptor when
- * it exists in localStorage.
- */
+// Pre-configured Axios instance for all API calls to the Express backend.
+// NEXT_PUBLIC_API_URL is set to the Render backend URL in production; falls back to localhost for dev.
 const api = axios.create({
-    baseURL: "http://localhost:5000/api",
+    baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api",
     headers: {
         "Content-Type": "application/json",
     },
 });
 
-// ---------------------------------------------------------------------------
-// Request Interceptor — attach JWT token if available
-// ---------------------------------------------------------------------------
+// Request interceptor: automatically attach the JWT token (from localStorage)
+// to every outgoing request's Authorization header
 api.interceptors.request.use(
     (config) => {
         const token =
@@ -33,17 +27,14 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// ---------------------------------------------------------------------------
-// Response Interceptor — handle 401 globally
-// ---------------------------------------------------------------------------
+// Response interceptor: globally handle 401 (unauthorized) responses.
+// Clears the invalid token and redirects to login (unless already on auth pages).
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            // Token expired or invalid — clear and redirect to login
             if (typeof window !== "undefined") {
                 localStorage.removeItem("token");
-                // Only redirect if not already on login/signup page
                 const path = window.location.pathname;
                 if (path !== "/login" && path !== "/signup") {
                     window.location.href = "/login";

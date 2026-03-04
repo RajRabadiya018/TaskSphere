@@ -5,9 +5,7 @@ import User from "../models/User";
 
 const router = Router();
 
-// ---------------------------------------------------------------------------
-// Helper — generate JWT token
-// ---------------------------------------------------------------------------
+// Helper: creates a JWT token with the user's ID, valid for 7 days
 const generateToken = (userId: string): string => {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
@@ -16,9 +14,7 @@ const generateToken = (userId: string): string => {
   return jwt.sign({ userId }, secret, { expiresIn: "7d" });
 };
 
-// ---------------------------------------------------------------------------
-// POST /api/auth/signup — Register a new user
-// ---------------------------------------------------------------------------
+// POST /api/auth/signup — Register a new user and return a JWT
 router.post(
   "/signup",
   async (
@@ -29,7 +25,6 @@ router.post(
     try {
       const { name, email, password } = req.body;
 
-      // Validate required fields
       if (!name || !email || !password) {
         res
           .status(400)
@@ -37,7 +32,6 @@ router.post(
         return;
       }
 
-      // Validate password length
       if (password.length < 6) {
         res
           .status(400)
@@ -45,7 +39,7 @@ router.post(
         return;
       }
 
-      // Check if user already exists
+      // Check for existing user — email is stored lowercase for case-insensitive matching
       const existingUser = await User.findOne({ email: email.toLowerCase() });
       if (existingUser) {
         res
@@ -54,14 +48,13 @@ router.post(
         return;
       }
 
-      // Create user
+      // Password is auto-hashed by the User model's pre-save hook
       const user = await User.create({
         name: name.trim(),
         email: email.toLowerCase().trim(),
         password,
       });
 
-      // Generate token
       const token = generateToken(user._id.toString());
 
       res.status(201).json({
@@ -79,9 +72,7 @@ router.post(
   },
 );
 
-// ---------------------------------------------------------------------------
-// POST /api/auth/login — Authenticate user & return token
-// ---------------------------------------------------------------------------
+// POST /api/auth/login — Authenticate user and return JWT
 router.post(
   "/login",
   async (
@@ -92,13 +83,12 @@ router.post(
     try {
       const { email, password } = req.body;
 
-      // Validate required fields
       if (!email || !password) {
         res.status(400).json({ message: "Email and password are required" });
         return;
       }
 
-      // Find user by email (explicitly select password since it's hidden by default)
+      // Must explicitly select password since it's excluded by default (select: false in schema)
       const user = await User.findOne({ email: email.toLowerCase() }).select(
         "+password",
       );
@@ -107,14 +97,13 @@ router.post(
         return;
       }
 
-      // Compare passwords
+      // Use the model's comparePassword method to verify against the bcrypt hash
       const isMatch = await user.comparePassword(password);
       if (!isMatch) {
         res.status(401).json({ message: "Invalid email or password" });
         return;
       }
 
-      // Generate token
       const token = generateToken(user._id.toString());
 
       res.json({
@@ -132,9 +121,8 @@ router.post(
   },
 );
 
-// ---------------------------------------------------------------------------
-// GET /api/auth/me — Get current authenticated user
-// ---------------------------------------------------------------------------
+// GET /api/auth/me — Return the currently authenticated user's profile.
+// Used by the client on page load to verify if the stored token is still valid.
 router.get(
   "/me",
   auth,

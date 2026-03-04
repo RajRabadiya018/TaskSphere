@@ -1,9 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import mongoose from "mongoose";
 
-// ---------------------------------------------------------------------------
-// Global Error Handler Middleware
-// ---------------------------------------------------------------------------
+// Global error handler — catches all errors forwarded via next(error) from route handlers.
+// Translates Mongoose-specific errors into user-friendly JSON responses.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const errorHandler = (
   err: any,
@@ -11,10 +10,9 @@ const errorHandler = (
   res: Response,
   _next: NextFunction,
 ): void => {
-  // Log the full error in development
   console.error("Unhandled error:", err);
 
-  // Mongoose CastError — invalid ObjectId format
+  // Invalid ObjectId format (e.g. passing "abc" where a MongoDB ID is expected)
   if (err instanceof mongoose.Error.CastError) {
     res.status(400).json({
       message: `Invalid ${err.path}: "${err.value}" is not a valid ID`,
@@ -22,14 +20,14 @@ const errorHandler = (
     return;
   }
 
-  // Mongoose ValidationError — schema validation failed
+  // Schema validation failed (e.g. missing required field, value too long)
   if (err instanceof mongoose.Error.ValidationError) {
     const messages = Object.values(err.errors).map((e) => e.message);
     res.status(400).json({ message: messages.join(", ") });
     return;
   }
 
-  // Mongoose duplicate key error (code 11000)
+  // Duplicate key error (e.g. registering with an email that already exists)
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue || {})[0] || "field";
     res.status(409).json({
@@ -38,13 +36,13 @@ const errorHandler = (
     return;
   }
 
-  // JSON parse error
+  // Malformed JSON in request body
   if (err.type === "entity.parse.failed") {
     res.status(400).json({ message: "Invalid JSON in request body" });
     return;
   }
 
-  // Default to 500
+  // Fallback: hide internal error details in production
   const statusCode = err.statusCode || 500;
   const message =
     process.env.NODE_ENV === "production"

@@ -3,6 +3,8 @@ import mongoose from "mongoose";
 
 dotenv.config();
 
+// Connects to MongoDB Atlas using the URI from .env
+// If connection fails, the server process exits immediately
 const connectDB = async (): Promise<void> => {
     try {
         const uri = process.env.MONGODB_URI;

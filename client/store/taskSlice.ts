@@ -4,12 +4,11 @@ import { Task } from "@/types/task";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 
-// ---------------------------------------------------------------------------
-// State
-// ---------------------------------------------------------------------------
+// Board state: represents the Kanban board for a single dashboard.
+// Tasks are stored as a map of columnId → Task[] for efficient column rendering.
 interface BoardState {
   columns: Column[];
-  tasks: Record<string, Task[]>; // columnId → Task[]
+  tasks: Record<string, Task[]>;
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
@@ -21,19 +20,12 @@ const initialState: BoardState = {
   error: null,
 };
 
-// ---------------------------------------------------------------------------
-// Helper — extract error message from Axios
-// ---------------------------------------------------------------------------
 function extractError(err: unknown, fallback: string): string {
   const axiosErr = err as AxiosError<{ message?: string }>;
   return axiosErr.response?.data?.message || fallback;
 }
 
-// ---------------------------------------------------------------------------
-// Thunks
-// ---------------------------------------------------------------------------
-
-/** GET /api/dashboards/:id/board — Fetch entire board */
+// Fetch the entire board (columns + tasks) for a dashboard — used when navigating to /board/:id
 export const fetchBoard = createAsyncThunk(
   "board/fetchBoard",
   async (dashboardId: string, { rejectWithValue }) => {
@@ -49,7 +41,6 @@ export const fetchBoard = createAsyncThunk(
   },
 );
 
-/** POST /api/tasks — Create a task */
 export const createTask = createAsyncThunk(
   "board/createTask",
   async (
@@ -74,7 +65,6 @@ export const createTask = createAsyncThunk(
   },
 );
 
-/** PUT /api/tasks/:id — Update a task */
 export const editTask = createAsyncThunk(
   "board/editTask",
   async (
@@ -90,7 +80,6 @@ export const editTask = createAsyncThunk(
   },
 );
 
-/** DELETE /api/tasks/:id — Delete a task */
 export const removeTask = createAsyncThunk(
   "board/removeTask",
   async (
@@ -106,7 +95,7 @@ export const removeTask = createAsyncThunk(
   },
 );
 
-/** PUT /api/tasks/:id/move — Move task to new column/position */
+// Move a task to a new column/position on the server
 export const moveTask = createAsyncThunk(
   "board/moveTask",
   async (
@@ -129,7 +118,6 @@ export const moveTask = createAsyncThunk(
   },
 );
 
-/** PUT /api/tasks/:id/star — Toggle starred */
 export const toggleStar = createAsyncThunk(
   "board/toggleStar",
   async (
@@ -145,7 +133,6 @@ export const toggleStar = createAsyncThunk(
   },
 );
 
-/** POST /api/columns — Create column */
 export const createColumn = createAsyncThunk(
   "board/createColumn",
   async (data: { dashboardId: string; name: string }, { rejectWithValue }) => {
@@ -158,7 +145,6 @@ export const createColumn = createAsyncThunk(
   },
 );
 
-/** PUT /api/columns/:id — Rename column */
 export const renameColumn = createAsyncThunk(
   "board/renameColumn",
   async ({ id, name }: { id: string; name: string }, { rejectWithValue }) => {
@@ -171,7 +157,8 @@ export const renameColumn = createAsyncThunk(
   },
 );
 
-/** DELETE /api/columns/:id — Delete custom column, then refetch board */
+// Delete column on server, then re-fetch the whole board because the server
+// moves orphaned tasks to the ToDo column — easier to re-sync than compute locally
 export const deleteColumn = createAsyncThunk(
   "board/deleteColumn",
   async (
@@ -180,7 +167,6 @@ export const deleteColumn = createAsyncThunk(
   ) => {
     try {
       await api.delete(`/columns/${id}`);
-      // Refetch board to get accurate state (tasks moved to ToDo on server)
       dispatch(fetchBoard(dashboardId));
       return id;
     } catch (err) {
@@ -189,7 +175,7 @@ export const deleteColumn = createAsyncThunk(
   },
 );
 
-/** PUT /api/columns/reorder — Persist column order */
+// Persist column ordering after drag-and-drop reorder
 export const reorderColumns = createAsyncThunk(
   "board/reorderColumns",
   async (columns: { id: string; position: number }[], { rejectWithValue }) => {
@@ -202,7 +188,7 @@ export const reorderColumns = createAsyncThunk(
   },
 );
 
-/** PUT /api/tasks/reorder — Persist task order (bulk) */
+// Persist task ordering after drag-and-drop (supports cross-column moves)
 export const reorderTasks = createAsyncThunk(
   "board/reorderTasks",
   async (
@@ -218,9 +204,6 @@ export const reorderTasks = createAsyncThunk(
   },
 );
 
-// ---------------------------------------------------------------------------
-// Slice
-// ---------------------------------------------------------------------------
 const boardSlice = createSlice({
   name: "board",
   initialState,
@@ -234,7 +217,8 @@ const boardSlice = createSlice({
     clearBoardError(state) {
       state.error = null;
     },
-    /** Optimistic: move task locally (used by drag-and-drop) */
+    // Optimistic local update: immediately move a task in the UI before the API call completes.
+    // This makes drag-and-drop feel instant — if the API fails, an error is shown.
     moveTaskLocal(
       state,
       action: PayloadAction<{
@@ -246,7 +230,7 @@ const boardSlice = createSlice({
     ) {
       const { taskId, sourceColId, destColId, destIndex } = action.payload;
 
-      // Remove from source column
+      // Remove task from source column
       const srcTasks = state.tasks[sourceColId] || [];
       const taskIndex = srcTasks.findIndex((t) => t._id === taskId);
       if (taskIndex === -1) return;
@@ -254,15 +238,15 @@ const boardSlice = createSlice({
       const [task] = srcTasks.splice(taskIndex, 1);
       task.columnId = destColId;
 
-      // Insert into destination column
+      // Insert into destination column at the specified index
       if (!state.tasks[destColId]) state.tasks[destColId] = [];
       state.tasks[destColId].splice(destIndex, 0, task);
 
-      // Update positions
+      // Recalculate positions for both columns (position = array index)
       state.tasks[sourceColId].forEach((t, i) => (t.position = i));
       state.tasks[destColId].forEach((t, i) => (t.position = i));
     },
-    /** Optimistic: reorder columns locally (used by drag-and-drop) */
+    // Optimistic local update: immediately reorder columns in the UI
     reorderColumnsLocal(
       state,
       action: PayloadAction<{ activeId: string; overId: string }>,
@@ -278,7 +262,6 @@ const boardSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // --- fetchBoard ---
     builder
       .addCase(fetchBoard.pending, (state) => {
         state.status = "loading";
@@ -294,7 +277,7 @@ const boardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // --- createTask ---
+    // Append newly created task to the end of its column
     builder
       .addCase(createTask.fulfilled, (state, action) => {
         const task = action.payload;
@@ -305,7 +288,7 @@ const boardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // --- editTask ---
+    // Update the task in-place within its column
     builder
       .addCase(editTask.fulfilled, (state, action) => {
         const updatedTask = action.payload;
@@ -319,7 +302,7 @@ const boardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // --- removeTask ---
+    // Remove the deleted task from its column
     builder
       .addCase(removeTask.fulfilled, (state, action) => {
         const { id, columnId } = action.payload;
@@ -333,7 +316,6 @@ const boardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // --- toggleStar ---
     builder
       .addCase(toggleStar.fulfilled, (state, action) => {
         const { task, columnId } = action.payload;
@@ -347,7 +329,7 @@ const boardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // --- createColumn ---
+    // Initialize an empty task array for the new column
     builder
       .addCase(createColumn.fulfilled, (state, action) => {
         state.columns.push(action.payload);
@@ -357,7 +339,6 @@ const boardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // --- renameColumn ---
     builder
       .addCase(renameColumn.fulfilled, (state, action) => {
         const idx = state.columns.findIndex(
@@ -369,7 +350,6 @@ const boardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // --- deleteColumn ---
     builder
       .addCase(deleteColumn.fulfilled, (state, action) => {
         const deletedId = action.payload;
@@ -380,12 +360,11 @@ const boardSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // --- reorderTasks (failure = out-of-sync, error is set) ---
+    // Reorder failures mean local state is out of sync with server
     builder.addCase(reorderTasks.rejected, (state, action) => {
       state.error = action.payload as string;
     });
 
-    // --- reorderColumns (failure = out-of-sync, error is set) ---
     builder.addCase(reorderColumns.rejected, (state, action) => {
       state.error = action.payload as string;
     });

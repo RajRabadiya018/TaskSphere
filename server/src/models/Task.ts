@@ -1,9 +1,6 @@
 import crypto from "crypto";
 import mongoose, { Document, Schema } from "mongoose";
 
-// ---------------------------------------------------------------------------
-// Interface
-// ---------------------------------------------------------------------------
 export interface ITask extends Document {
   _id: mongoose.Types.ObjectId;
   columnId: mongoose.Types.ObjectId;
@@ -19,18 +16,14 @@ export interface ITask extends Document {
   assigneeId: string;
   position: number;
   starred: boolean;
-
   updatedAt: Date;
 }
 
-// ---------------------------------------------------------------------------
-// Schema
-// ---------------------------------------------------------------------------
 const taskSchema = new Schema<ITask>(
   {
     columnId: {
       type: Schema.Types.ObjectId,
-      ref: "Column",
+      ref: "Column", // References the Column model for population
       required: [true, "Column ID is required"],
       index: true,
     },
@@ -98,13 +91,14 @@ const taskSchema = new Schema<ITask>(
   },
 );
 
-// Auto-generate assigneeId when assignedTo is set.
-// Same assignee name always gets the same assigneeId.
+// Pre-save hook: auto-generate a consistent assigneeId for each unique assignee name.
+// If another task already has this assignee name, reuse that ID for consistency.
+// Otherwise, generate a new random ID like "ASN-A1B2C3D4".
 taskSchema.pre("save", async function (next) {
   try {
     if (this.assignedTo && this.assignedTo.trim()) {
       if (!this.assigneeId) {
-        // Look for an existing task with the same assignee name that already has an ID
+        // Check if any existing task already has an ID for this assignee name
         const existing = await mongoose
           .model("Task")
           .findOne({
@@ -126,7 +120,7 @@ taskSchema.pre("save", async function (next) {
   }
 });
 
-// Compound indexes for efficient queries
+// Compound indexes for efficient queries when fetching tasks by column or dashboard
 taskSchema.index({ columnId: 1, position: 1 });
 taskSchema.index({ dashboardId: 1, columnId: 1 });
 

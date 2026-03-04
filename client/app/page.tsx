@@ -106,24 +106,18 @@ export default function DashboardsPage() {
   );
   const { user } = useSelector((state: RootState) => state.auth);
 
-  // Create dashboard
+  // Local state for dashboard CRUD operations
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
   const createInputRef = useRef<HTMLInputElement>(null);
-
-  // Rename
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const renameInputRef = useRef<HTMLInputElement>(null);
-
-  // Delete
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
     name: string;
   } | null>(null);
-
-  // Search
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -143,12 +137,12 @@ export default function DashboardsPage() {
     d.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // Pagination
+
   const { currentPage, totalPages, goToPage, nextPage, prevPage, pageItems } =
     usePagination(filteredDashboards.length, PAGE_SIZE);
   const paginatedDashboards = pageItems(filteredDashboards);
 
-  // Handlers
+
   const handleCreate = async () => {
     if (!newName.trim()) return;
     setCreating(true);
@@ -216,7 +210,7 @@ export default function DashboardsPage() {
         />
       )}
 
-      {/* ── Hero Banner ── */}
+      {/* Hero Banner */}
       <div className="relative overflow-hidden rounded-2xl border border-border/40 bg-linear-to-br from-primary/6 via-background to-accent/8">
         {/* Decorative blurred circles */}
         <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
@@ -271,7 +265,7 @@ export default function DashboardsPage() {
         </div>
       </div>
 
-      {/* ── Create Dashboard Inline ── */}
+      {/* Create Dashboard Inline */}
       {showCreate && (
         <div className="rounded-xl border border-border bg-card p-5 transition-all">
           <p className="mb-3 text-sm font-medium text-foreground">
@@ -318,7 +312,7 @@ export default function DashboardsPage() {
         </div>
       )}
 
-      {/* ── Boards Section ── */}
+      {/* Boards Section */}
       <div className="flex-1 flex flex-col gap-3">
         {/* Section header with search */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -723,7 +717,7 @@ export default function DashboardsPage() {
         )}
       </div>
 
-      {/* ── Feature Highlights ── */}
+      {/* Feature Highlights */}
       <div className="mt-auto grid gap-2.5 sm:grid-cols-3 pt-1">
         {FEATURES.map((f) => (
           <div

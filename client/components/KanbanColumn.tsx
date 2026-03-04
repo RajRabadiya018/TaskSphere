@@ -35,17 +35,13 @@ export default function KanbanColumn({
 }: KanbanColumnProps) {
   const dispatch = useDispatch<AppDispatch>();
 
-  // Rename state
+  // Local state for column rename, delete confirmation, and menu dropdown
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(column.name);
-
-  // Delete confirm state
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-
-  // Column menu state
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Make column sortable (for column drag-and-drop)
+  // Make the column itself sortable (for column drag-and-drop reordering)
   const {
     attributes: colAttributes,
     listeners: colListeners,
@@ -63,7 +59,7 @@ export default function KanbanColumn({
     transition: colTransition,
   };
 
-  // Make column a droppable area for tasks
+  // Also make the column a droppable zone so tasks can be dropped into it
   const { setNodeRef: setDropRef } = useDroppable({
     id: column._id,
     data: { type: "column" },
@@ -71,7 +67,7 @@ export default function KanbanColumn({
 
   const taskIds = useMemo(() => tasks.map((t) => t._id), [tasks]);
 
-  // Handlers
+
   const handleRename = async () => {
     if (!renameValue.trim() || renameValue.trim() === column.name) {
       setIsRenaming(false);
@@ -107,9 +103,8 @@ export default function KanbanColumn({
       <div
         ref={setColNodeRef}
         style={colStyle}
-        className={`flex w-75 min-w-67.5 flex-1 shrink-0 flex-col rounded-xl bg-muted/30 border border-border/40 transition-all duration-200 overflow-hidden hover:border-border/60 ${
-          isColDragging ? "opacity-40 scale-[0.98]" : ""
-        }`}
+        className={`flex w-75 min-w-67.5 flex-1 shrink-0 flex-col rounded-xl bg-muted/30 border border-border/40 transition-all duration-200 overflow-hidden hover:border-border/60 ${isColDragging ? "opacity-40 scale-[0.98]" : ""
+          }`}
       >
         {/* Column header — drag handle for column reorder */}
         <div

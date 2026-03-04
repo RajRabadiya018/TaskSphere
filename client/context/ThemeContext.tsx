@@ -20,6 +20,7 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
+// Read saved theme from localStorage, default to dark mode
 function getInitialTheme(): "light" | "dark" {
   if (typeof window === "undefined") return "dark";
   const saved = localStorage.getItem("theme");
@@ -27,13 +28,14 @@ function getInitialTheme(): "light" | "dark" {
   return "dark";
 }
 
+// Provides theme (dark/light), sidebar toggle, and compact view toggle to the entire app.
+// Theme preference is persisted in localStorage and applied via class/attribute on <html>.
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
-
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(false);
-
   const [compactView, setCompactView] = useState<boolean>(false);
 
+  // Sync the theme with the DOM and localStorage whenever it changes
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     if (theme === "dark") {
@@ -41,7 +43,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     } else {
       document.documentElement.classList.remove("dark");
     }
-
     localStorage.setItem("theme", theme);
   }, [theme]);
 
@@ -73,6 +74,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Custom hook to access theme context — throws if used outside ThemeProvider
 export function useTheme(): ThemeContextValue {
   const context = useContext(ThemeContext);
   if (!context) {

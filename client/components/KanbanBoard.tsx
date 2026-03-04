@@ -44,12 +44,13 @@ export default function KanbanBoard({
   const dispatch = useDispatch<AppDispatch>();
   const { columns, tasks } = useSelector((state: RootState) => state.board);
 
-  // Drag state
+  // Track the currently dragged item (task or column) and its source column
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeColumn, setActiveColumn] = useState<Column | null>(null);
   const [dragSourceColId, setDragSourceColId] = useState<string | null>(null);
 
-  // Prevent handleDragOver oscillation (cross-column ping-pong)
+  // Prevents drag oscillation: when a task crosses column boundaries, dnd-kit
+  // can fire both A→B and B→A moves in rapid succession. This ref blocks the reversal.
   const lastCrossColMoveRef = useRef<{ from: string; to: string } | null>(null);
 
   const sensors = useSensors(
@@ -58,7 +59,7 @@ export default function KanbanBoard({
     }),
   );
 
-  // Sort columns by position
+
   const sortedColumns = useMemo(
     () => [...columns].sort((a, b) => a.position - b.position),
     [columns],
@@ -69,7 +70,7 @@ export default function KanbanBoard({
     [sortedColumns],
   );
 
-  // Get sorted tasks for a column (filtered by search query)
+  // Returns tasks for a column, filtered by search query and sorted (starred first, then by position)
   const getSortedTasks = useCallback(
     (columnId: string): Task[] => {
       let colTasks = tasks[columnId] || [];
@@ -116,20 +117,18 @@ export default function KanbanBoard({
     return null;
   };
 
-  // ── Drag handlers ──
+  // Identifies what is being dragged (column vs task) and stores it in state
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const id = active.id as string;
     lastCrossColMoveRef.current = null;
 
-    // Column drag
     if (active.data.current?.type === "column") {
       const col = columns.find((c) => c._id === id);
       if (col) setActiveColumn(col);
       return;
     }
 
-    // Task drag
     const colId = findColumnOfTask(id);
     if (colId) {
       const task = tasks[colId]?.find((t) => t._id === id);
@@ -140,6 +139,7 @@ export default function KanbanBoard({
     }
   };
 
+  // Fires continuously while dragging over elements — handles cross-column task moves
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event;
     if (!over || !activeTask) return;
@@ -150,7 +150,7 @@ export default function KanbanBoard({
     const sourceColId = findColumnOfTask(activeId);
     if (!sourceColId) return;
 
-    // Find destination column
+    // Determine destination column: could be hovering over a column directly or over a task in a column
     let destColId: string | null = null;
     if (columns.some((c) => c._id === overId)) {
       destColId = overId;
@@ -171,7 +171,7 @@ export default function KanbanBoard({
     }
     lastCrossColMoveRef.current = { from: sourceColId, to: destColId };
 
-    // Move task to new column optimistically
+    // Optimistic move: update UI immediately; API call happens in handleDragEnd
     const destTasks = tasks[destColId] || [];
     const overTaskIndex = destTasks.findIndex((t) => t._id === overId);
     const destIndex = overTaskIndex >= 0 ? overTaskIndex : destTasks.length;
@@ -186,10 +186,11 @@ export default function KanbanBoard({
     );
   };
 
+  // Fires when the user releases the dragged item — persists changes to the server
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
-    // ── Column drop ──
+    // Handle column reorder drop
     if (activeColumn) {
       setActiveColumn(null);
       if (!over || active.id === over.id) return;
@@ -209,7 +210,7 @@ export default function KanbanBoard({
         }),
       );
 
-      // Build new order and persist
+      // Persist column order to the server
       const reordered = [...sortedColumns];
       const [moved] = reordered.splice(oldIndex, 1);
       reordered.splice(newIndex, 0, moved);
@@ -219,7 +220,7 @@ export default function KanbanBoard({
       return;
     }
 
-    // ── Task drop ──
+    // Handle task drop
     if (activeTask) {
       setActiveTask(null);
       lastCrossColMoveRef.current = null;
@@ -277,8 +278,7 @@ export default function KanbanBoard({
         }
       }
 
-      // Persist all task positions in affected columns
-      // Include the original source column so its positions are also synced
+      // Persist updated positions for all tasks in affected columns (source + destination)
       const affectedCols = new Set([destColId]);
       if (originalSourceColId) affectedCols.add(originalSourceColId);
       if (currentColId) affectedCols.add(currentColId);
@@ -335,14 +335,14 @@ export default function KanbanBoard({
         </div>
       </SortableContext>
 
-      {/* Drag overlay */}
+      {/* Drag overlay: floating preview that follows the cursor during drag */}
       <DragOverlay>
         {activeTask && (
           <div className="rotate-3 opacity-90">
             <KanbanTaskCard
               task={activeTask}
-              onOpen={() => {}}
-              onStar={() => {}}
+              onOpen={() => { }}
+              onStar={() => { }}
               isDragOverlay
             />
           </div>

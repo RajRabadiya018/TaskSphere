@@ -9,16 +9,14 @@ const router = Router();
 // All routes require authentication
 router.use(auth);
 
-// Default columns created with every new dashboard
+// Default columns auto-created with every new dashboard
 const DEFAULT_COLUMNS = [
   { name: "ToDo", position: 0 },
   { name: "In Progress", position: 1 },
   { name: "Done", position: 2 },
 ];
 
-// ---------------------------------------------------------------------------
-// GET /api/dashboards — List all dashboards for the current user
-// ---------------------------------------------------------------------------
+// GET /api/dashboards — List all dashboards for the current user, newest first
 router.get(
   "/",
   async (
@@ -37,9 +35,9 @@ router.get(
   },
 );
 
-// ---------------------------------------------------------------------------
-// GET /api/dashboards/:id/board — Get full board (columns + tasks)
-// ---------------------------------------------------------------------------
+// GET /api/dashboards/:id/board — Fetch the full board view for a dashboard.
+// Returns the dashboard, its columns (sorted by position), and tasks grouped by columnId.
+// This is the main data-fetching endpoint for the Kanban board page.
 router.get(
   "/:id/board",
   async (
@@ -48,6 +46,7 @@ router.get(
     next: NextFunction,
   ): Promise<void> => {
     try {
+      // Verify dashboard exists and belongs to the authenticated user
       const dashboard = await Dashboard.findOne({
         _id: req.params.id,
         userId: req.userId,
@@ -58,17 +57,15 @@ router.get(
         return;
       }
 
-      // Fetch columns sorted by position
       const columns = await Column.find({
         dashboardId: dashboard._id,
       }).sort({ position: 1 });
 
-      // Fetch all tasks for this dashboard sorted by position
       const tasks = await Task.find({
         dashboardId: dashboard._id,
       }).sort({ position: 1 });
 
-      // Group tasks by columnId
+      // Group tasks into a map of columnId → Task[] for the frontend Kanban layout
       const tasksByColumn: Record<string, typeof tasks> = {};
       for (const col of columns) {
         tasksByColumn[col._id.toString()] = [];
@@ -92,9 +89,7 @@ router.get(
   },
 );
 
-// ---------------------------------------------------------------------------
-// POST /api/dashboards — Create a new dashboard (with default columns)
-// ---------------------------------------------------------------------------
+// POST /api/dashboards — Create a new dashboard with default columns (ToDo, In Progress, Done)
 router.post(
   "/",
   async (
@@ -122,7 +117,7 @@ router.post(
         userId: req.userId,
       });
 
-      // Auto-create default columns
+      // Auto-create the 3 default columns so the board is immediately usable
       await Column.insertMany(
         DEFAULT_COLUMNS.map((col) => ({
           dashboardId: dashboard._id,
@@ -139,9 +134,7 @@ router.post(
   },
 );
 
-// ---------------------------------------------------------------------------
 // PUT /api/dashboards/:id — Rename a dashboard
-// ---------------------------------------------------------------------------
 router.put(
   "/:id",
   async (
@@ -164,6 +157,7 @@ router.put(
         return;
       }
 
+      // findOneAndUpdate with userId ensures users can only rename their own dashboards
       const dashboard = await Dashboard.findOneAndUpdate(
         { _id: req.params.id, userId: req.userId },
         { name: name.trim() },
@@ -182,9 +176,7 @@ router.put(
   },
 );
 
-// ---------------------------------------------------------------------------
-// DELETE /api/dashboards/:id — Delete dashboard + cascade columns & tasks
-// ---------------------------------------------------------------------------
+// DELETE /api/dashboards/:id — Delete a dashboard and cascade-delete all its columns and tasks
 router.delete(
   "/:id",
   async (
@@ -203,7 +195,7 @@ router.delete(
         return;
       }
 
-      // Cascade: delete all columns and tasks for this dashboard
+      // Cascade delete: remove all tasks and columns belonging to this dashboard
       await Task.deleteMany({ dashboardId: dashboard._id });
       await Column.deleteMany({ dashboardId: dashboard._id });
 

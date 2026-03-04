@@ -1,10 +1,7 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import api from "@/lib/api";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
 export interface AuthUser {
     _id: string;
     name: string;
@@ -20,9 +17,7 @@ interface AuthState {
     _hydrated: boolean; // true once token has been read from localStorage
 }
 
-// ---------------------------------------------------------------------------
-// Initial State — token starts null; AuthLoader hydrates it from localStorage
-// ---------------------------------------------------------------------------
+// Token starts null; AuthLoader component hydrates it from localStorage on mount
 const initialState: AuthState = {
     user: null,
     token: null,
@@ -31,11 +26,7 @@ const initialState: AuthState = {
     _hydrated: false,
 };
 
-// ---------------------------------------------------------------------------
-// Async Thunks
-// ---------------------------------------------------------------------------
-
-/** POST /api/auth/signup */
+// POST /api/auth/signup — register and store the returned JWT in localStorage
 export const signupUser = createAsyncThunk(
     "auth/signup",
     async (
@@ -56,7 +47,7 @@ export const signupUser = createAsyncThunk(
     }
 );
 
-/** POST /api/auth/login */
+// POST /api/auth/login — authenticate and store the returned JWT
 export const loginUser = createAsyncThunk(
     "auth/login",
     async (
@@ -77,7 +68,8 @@ export const loginUser = createAsyncThunk(
     }
 );
 
-/** GET /api/auth/me — load the current user from a stored token */
+// GET /api/auth/me — verify the stored token is still valid and load user profile.
+// Called on app startup by AuthLoader to restore the session.
 export const loadUser = createAsyncThunk(
     "auth/loadUser",
     async (_, { rejectWithValue }) => {
@@ -85,21 +77,18 @@ export const loadUser = createAsyncThunk(
             const res = await api.get("/auth/me");
             return res.data.user as AuthUser;
         } catch {
-            // Token invalid/expired — clear it
+            // Token invalid or expired — clear it so the user gets redirected to login
             localStorage.removeItem("token");
             return rejectWithValue("Session expired");
         }
     }
 );
 
-// ---------------------------------------------------------------------------
-// Slice
-// ---------------------------------------------------------------------------
 const authSlice = createSlice({
     name: "auth",
     initialState,
     reducers: {
-        /** Hydrate token from localStorage (called once by AuthLoader) */
+        // Called once by AuthLoader on mount to read the JWT from localStorage into Redux state
         hydrateToken(state) {
             if (!state._hydrated) {
                 const stored = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -107,7 +96,7 @@ const authSlice = createSlice({
                 state._hydrated = true;
             }
         },
-        /** Logout — clear user, token, and localStorage */
+        // Clear all auth state and remove token from localStorage
         logout(state) {
             state.user = null;
             state.token = null;
@@ -117,13 +106,11 @@ const authSlice = createSlice({
                 localStorage.removeItem("token");
             }
         },
-        /** Clear error message */
         clearAuthError(state) {
             state.error = null;
         },
     },
     extraReducers: (builder) => {
-        // --- signup ---
         builder
             .addCase(signupUser.pending, (state) => {
                 state.status = "loading";
@@ -140,7 +127,6 @@ const authSlice = createSlice({
                 state.error = action.payload as string;
             });
 
-        // --- login ---
         builder
             .addCase(loginUser.pending, (state) => {
                 state.status = "loading";
@@ -157,7 +143,6 @@ const authSlice = createSlice({
                 state.error = action.payload as string;
             });
 
-        // --- loadUser ---
         builder
             .addCase(loadUser.pending, (state) => {
                 state.status = "loading";
@@ -168,6 +153,7 @@ const authSlice = createSlice({
                 state.error = null;
             })
             .addCase(loadUser.rejected, (state) => {
+                // Token was invalid — reset to logged-out state
                 state.status = "idle";
                 state.user = null;
                 state.token = null;

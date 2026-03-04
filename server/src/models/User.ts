@@ -1,9 +1,6 @@
 import bcrypt from "bcryptjs";
 import mongoose, { Document, Schema } from "mongoose";
 
-// ---------------------------------------------------------------------------
-// Interface
-// ---------------------------------------------------------------------------
 export interface IUser extends Document {
     _id: mongoose.Types.ObjectId;
     name: string;
@@ -13,9 +10,6 @@ export interface IUser extends Document {
     comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-// ---------------------------------------------------------------------------
-// Schema
-// ---------------------------------------------------------------------------
 const userSchema = new Schema<IUser>(
     {
         name: {
@@ -40,7 +34,7 @@ const userSchema = new Schema<IUser>(
             type: String,
             required: [true, "Password is required"],
             minlength: [6, "Password must be at least 6 characters"],
-            select: false, // Don't return password by default
+            select: false, // Exclude password from query results by default for security
         },
     },
     {
@@ -48,9 +42,8 @@ const userSchema = new Schema<IUser>(
     }
 );
 
-// ---------------------------------------------------------------------------
-// Pre-save hook — hash password before saving
-// ---------------------------------------------------------------------------
+// Pre-save hook: automatically hash the password before storing it in the DB.
+// Only runs when the password field has been modified (not on every save).
 userSchema.pre("save", async function (next) {
     if (!this.isModified("password")) return next();
 
@@ -63,18 +56,15 @@ userSchema.pre("save", async function (next) {
     }
 });
 
-// ---------------------------------------------------------------------------
-// Instance method — compare password
-// ---------------------------------------------------------------------------
+// Instance method: securely compare a plaintext password against the stored hash.
+// Used during login to verify credentials.
 userSchema.methods.comparePassword = async function (
     candidatePassword: string
 ): Promise<boolean> {
     return bcrypt.compare(candidatePassword, this.password);
 };
 
-// ---------------------------------------------------------------------------
-// Ensure password field is not returned in JSON
-// ---------------------------------------------------------------------------
+// Strip password from JSON output so it's never sent to the client
 userSchema.set("toJSON", {
     transform(_doc: any, ret: any) {
         delete ret.password;
