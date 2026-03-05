@@ -104,7 +104,7 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
           }
           options={[
             { value: "all", label: "All Status" },
-            { value: "To Do", label: "To Do" },
+            { value: "ToDo", label: "To Do" },
             { value: "In Progress", label: "In Progress" },
             { value: "Done", label: "Done" },
           ]}
