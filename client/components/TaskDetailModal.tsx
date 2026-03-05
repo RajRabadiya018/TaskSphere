@@ -87,6 +87,7 @@ export default function TaskDetailModal({
         }),
       ).unwrap();
       setEditing(false);
+      onClose();
     } catch (err: unknown) {
       setModalError(
         typeof err === "string"
