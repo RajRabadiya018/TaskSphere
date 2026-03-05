@@ -1,4 +1,4 @@
-import crypto from "crypto";
+
 import { NextFunction, Response, Router } from "express";
 import mongoose from "mongoose";
 import auth, { AuthRequest } from "../middleware/auth";
@@ -49,7 +49,7 @@ router.get(
         .populate("dashboardId", "name")
         .sort({ createdAt: -1 });
 
-// serch by title and assignee
+      // serch by title and assignee
 
       let result = tasks;
       if (search) {
@@ -301,22 +301,7 @@ router.put(
         }
       }
 
-      if ("assignedTo" in updates) {
-        const trimmedAssignee = updates.assignedTo?.trim();
-        if (trimmedAssignee) {
-          const existing = await Task.findOne({
-            assignedTo: trimmedAssignee,
-            assigneeId: { $ne: null },
-          })
-            .select("assigneeId")
-            .lean();
-          updates.assigneeId = existing
-            ? (existing as any).assigneeId
-            : `ASN-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-        } else {
-          updates.assigneeId = null;
-        }
-      }
+
 
       const updatedTask = await Task.findByIdAndUpdate(req.params.id, updates, {
         new: true,

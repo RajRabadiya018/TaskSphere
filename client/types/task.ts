@@ -12,7 +12,7 @@ export interface Task {
   dueDate?: string;
   tags: string[];
   assignedTo: string;
-  assigneeId?: string;
+
   position: number;
   starred: boolean;
   createdAt: string;
@@ -31,7 +31,7 @@ export interface TaskListItem {
   dueDate?: string;
   tags: string[];
   assignedTo: string;
-  assigneeId?: string;
+
   position: number;
   starred: boolean;
   createdAt: string;

@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface ITask extends Document {
@@ -13,7 +12,6 @@ export interface ITask extends Document {
   dueDate?: Date;
   tags: string[];
   assignedTo: string;
-  assigneeId: string;
   position: number;
   starred: boolean;
   updatedAt: Date;
@@ -23,7 +21,7 @@ const taskSchema = new Schema<ITask>(
   {
     columnId: {
       type: Schema.Types.ObjectId,
-      ref: "Column", 
+      ref: "Column",
       required: [true, "Column ID is required"],
       index: true,
     },
@@ -71,11 +69,6 @@ const taskSchema = new Schema<ITask>(
       default: "",
       trim: true,
     },
-    assigneeId: {
-      type: String,
-      sparse: true,
-      default: undefined,
-    },
     position: {
       type: Number,
       required: true,
@@ -90,31 +83,6 @@ const taskSchema = new Schema<ITask>(
     timestamps: true,
   },
 );
-
-taskSchema.pre("save", async function (next) {
-  try {
-    if (this.assignedTo && this.assignedTo.trim()) {
-      if (!this.assigneeId) {
-        const existing = await mongoose
-          .model("Task")
-          .findOne({
-            assignedTo: this.assignedTo.trim(),
-            assigneeId: { $ne: null },
-          })
-          .select("assigneeId")
-          .lean();
-        this.assigneeId = existing
-          ? (existing as any).assigneeId
-          : `ASN-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-      }
-    } else {
-      this.assigneeId = undefined as any;
-    }
-    next();
-  } catch (err: any) {
-    next(err);
-  }
-});
 
 taskSchema.index({ columnId: 1, position: 1 });
 taskSchema.index({ dashboardId: 1, columnId: 1 });
