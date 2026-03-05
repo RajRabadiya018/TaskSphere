@@ -5,16 +5,16 @@ import { AxiosError } from "axios";
 
 export interface TaskFilters {
   search: string;
-  priority: "all" | "low" | "medium" | "high";
-  status: "all" | "To Do" | "In Progress" | "Done";
-  dashboardId: string; 
+  priority: string[];
+  status: string[];
+  dashboardId: string;
 }
 
 interface TaskListState {
   tasks: TaskListItem[];
-  selectedTask: TaskListItem | null; 
+  selectedTask: TaskListItem | null;
   filters: TaskFilters;
-  stats: TaskStats | null; 
+  stats: TaskStats | null;
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
 }
@@ -24,8 +24,8 @@ const initialState: TaskListState = {
   selectedTask: null,
   filters: {
     search: "",
-    priority: "all",
-    status: "all",
+    priority: [],
+    status: [],
     dashboardId: "",
   },
   stats: null,
@@ -44,10 +44,10 @@ export const fetchAllTasks = createAsyncThunk(
     try {
       const params: Record<string, string> = {};
       if (filters?.search) params.search = filters.search;
-      if (filters?.priority && filters.priority !== "all")
-        params.priority = filters.priority;
-      if (filters?.status && filters.status !== "all")
-        params.status = filters.status;
+      if (filters?.priority && filters.priority.length > 0)
+        params.priority = filters.priority.join(",");
+      if (filters?.status && filters.status.length > 0)
+        params.status = filters.status.join(",");
       if (filters?.dashboardId) params.dashboardId = filters.dashboardId;
 
       const res = await api.get("/tasks", { params });
@@ -148,8 +148,8 @@ const taskListSlice = createSlice({
     clearFilters(state) {
       state.filters = {
         search: "",
-        priority: "all",
-        status: "all",
+        priority: [],
+        status: [],
         dashboardId: "",
       };
     },

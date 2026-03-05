@@ -11,10 +11,10 @@ export function useTaskFilters() {
 
   const isFiltered = useMemo(() => {
     return (
-      filters.priority !== "all" ||
+      filters.priority.length > 0 ||
       filters.search !== "" ||
       filters.dashboardId !== "" ||
-      filters.status !== "all"
+      filters.status.length > 0
     );
   }, [filters]);
 

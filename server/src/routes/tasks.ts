@@ -31,11 +31,19 @@ router.get(
 
       const filter: any = { userId: req.userId };
       if (dashboardId) filter.dashboardId = dashboardId;
-      if (priority && priority !== "all") filter.priority = priority;
+      if (priority && priority !== "all") {
+        const priorities = (priority as string).split(",").map((p) => p.trim());
+        if (priorities.length === 1) {
+          filter.priority = priorities[0];
+        } else {
+          filter.priority = { $in: priorities };
+        }
+      }
 
       if (status && status !== "all") {
+        const statuses = (status as string).split(",").map((s) => s.trim());
         const matchingCols = await Column.find({
-          name: status as string,
+          name: { $in: statuses },
         }).select("_id");
         if (matchingCols.length > 0) {
           filter.columnId = { $in: matchingCols.map((c) => c._id) };

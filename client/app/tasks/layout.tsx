@@ -59,7 +59,7 @@ export default function TasksLayout({
       <aside
         className={cn(
           "fixed left-0 top-18 z-40 h-[calc(100vh-4.5rem)] w-72 shrink-0 overflow-y-auto border-r border-border bg-background p-5 transition-transform duration-200",
-          "sm:sticky sm:top-24 sm:z-0 sm:h-fit sm:max-h-[calc(100vh-7rem)] sm:translate-x-0 sm:rounded-xl sm:border sm:bg-card",
+          "sm:sticky sm:top-24 sm:z-0 sm:h-fit sm:max-h-[calc(100vh-6rem)] sm:translate-x-0 sm:rounded-xl sm:border sm:bg-card",
           sidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >

@@ -12,6 +12,30 @@ interface TaskFiltersBarProps {
   className?: string;
 }
 
+function ToggleChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "rounded-full px-3 py-1.5 text-xs font-medium border transition-all duration-150",
+        active
+          ? "bg-foreground text-background border-foreground"
+          : "bg-transparent text-muted-foreground border-border hover:border-foreground/30 hover:text-foreground",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
 export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
   const dispatch = useDispatch<AppDispatch>();
   const filters = useSelector((state: RootState) => state.taskList.filters);
@@ -20,10 +44,26 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
   );
 
   const isFiltered =
-    filters.priority !== "all" ||
+    filters.priority.length > 0 ||
     filters.search !== "" ||
     filters.dashboardId !== "" ||
-    filters.status !== "all";
+    filters.status.length > 0;
+
+  const toggleStatus = (value: string) => {
+    const current = filters.status;
+    const updated = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    dispatch(setFilters({ status: updated }));
+  };
+
+  const togglePriority = (value: string) => {
+    const current = filters.priority;
+    const updated = current.includes(value)
+      ? current.filter((v) => v !== value)
+      : [...current, value];
+    dispatch(setFilters({ priority: updated }));
+  };
 
   return (
     <div className={cn("flex flex-col gap-5", className)}>
@@ -81,7 +121,7 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
       </div>
 
       <div>
-        <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <label className="mb-2.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <svg
             className="h-3.5 w-3.5"
             fill="none"
@@ -97,22 +137,27 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
           </svg>
           Status
         </label>
-        <StyledSelect
-          value={filters.status}
-          onChange={(val) =>
-            dispatch(setFilters({ status: val as typeof filters.status }))
-          }
-          options={[
-            { value: "all", label: "All Status" },
-            { value: "ToDo", label: "To Do" },
-            { value: "In Progress", label: "In Progress" },
-            { value: "Done", label: "Done" },
-          ]}
-        />
+        <div className="flex flex-wrap gap-2">
+          <ToggleChip
+            label="To Do"
+            active={filters.status.includes("ToDo")}
+            onClick={() => toggleStatus("ToDo")}
+          />
+          <ToggleChip
+            label="In Progress"
+            active={filters.status.includes("In Progress")}
+            onClick={() => toggleStatus("In Progress")}
+          />
+          <ToggleChip
+            label="Done"
+            active={filters.status.includes("Done")}
+            onClick={() => toggleStatus("Done")}
+          />
+        </div>
       </div>
 
       <div>
-        <label className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <label className="mb-2.5 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <svg
             className="h-3.5 w-3.5"
             fill="none"
@@ -128,18 +173,23 @@ export default function TaskFiltersBar({ className }: TaskFiltersBarProps) {
           </svg>
           Priority
         </label>
-        <StyledSelect
-          value={filters.priority}
-          onChange={(val) =>
-            dispatch(setFilters({ priority: val as typeof filters.priority }))
-          }
-          options={[
-            { value: "all", label: "All Priority" },
-            { value: "low", label: "Low" },
-            { value: "medium", label: "Medium" },
-            { value: "high", label: "High" },
-          ]}
-        />
+        <div className="flex flex-wrap gap-2">
+          <ToggleChip
+            label="Low"
+            active={filters.priority.includes("low")}
+            onClick={() => togglePriority("low")}
+          />
+          <ToggleChip
+            label="Medium"
+            active={filters.priority.includes("medium")}
+            onClick={() => togglePriority("medium")}
+          />
+          <ToggleChip
+            label="High"
+            active={filters.priority.includes("high")}
+            onClick={() => togglePriority("high")}
+          />
+        </div>
       </div>
 
       {isFiltered && (
