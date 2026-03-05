@@ -6,6 +6,7 @@ import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePagination } from "@/hooks/usePagination";
+import api from "@/lib/api";
 import { AppDispatch, RootState } from "@/store";
 import {
   clearDashboardError,
@@ -118,6 +119,7 @@ export default function DashboardsPage() {
     id: string;
     name: string;
   } | null>(null);
+  const [deleteCounts, setDeleteCounts] = useState<{ tasks: number; columns: number } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -175,7 +177,25 @@ export default function DashboardsPage() {
     } catch {
     }
     setDeleteTarget(null);
+    setDeleteCounts(null);
   };
+
+  useEffect(() => {
+    if (!deleteTarget) {
+      setDeleteCounts(null);
+      return;
+    }
+    api.get(`/dashboards/${deleteTarget.id}/board`)
+      .then((res) => {
+        const columns = res.data.columns?.length || 0;
+        const tasks = Object.values(res.data.tasks || {}).reduce(
+          (sum: number, arr: any) => sum + (Array.isArray(arr) ? arr.length : 0),
+          0,
+        );
+        setDeleteCounts({ tasks: tasks as number, columns });
+      })
+      .catch(() => setDeleteCounts(null));
+  }, [deleteTarget]);
 
   const startRename = (id: string, currentName: string) => {
     setRenamingId(id);
@@ -726,9 +746,9 @@ export default function DashboardsPage() {
       <ConfirmDialog
         open={!!deleteTarget}
         title="Delete Dashboard"
-        description={`Are you sure you want to delete "${deleteTarget?.name}"? This will permanently remove the dashboard and all its data.`}
+        description={`Are you sure you want to delete "${deleteTarget?.name}"?${deleteCounts ? ` This will permanently delete ${deleteCounts.tasks} task${deleteCounts.tasks !== 1 ? "s" : ""} across ${deleteCounts.columns} column${deleteCounts.columns !== 1 ? "s" : ""}.` : " This will permanently remove the dashboard and all its data."}`}
         onConfirm={handleDelete}
-        onCancel={() => setDeleteTarget(null)}
+        onCancel={() => { setDeleteTarget(null); setDeleteCounts(null); }}
         confirmLabel="Delete"
         destructive
       />
