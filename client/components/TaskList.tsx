@@ -5,20 +5,45 @@ import TaskCard from "@/components/TaskCard";
 import { Button } from "@/components/ui/button";
 import { usePagination } from "@/hooks/usePagination";
 import { useTaskFilters } from "@/hooks/useTaskFilters";
-import { AppDispatch } from "@/store";
+import { AppDispatch, RootState } from "@/store";
 import { deleteTaskFromList } from "@/store/taskListSlice";
 import { TaskListItem } from "@/types/task";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const PAGE_SIZE = 6;
+
+function TaskCardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="h-5 w-20 rounded-full bg-muted" />
+        <div className="h-5 w-5 rounded bg-muted" />
+      </div>
+      <div className="mb-2 h-5 w-3/4 rounded bg-muted" />
+      <div className="mb-4 space-y-1.5">
+        <div className="h-3 w-full rounded bg-muted" />
+        <div className="h-3 w-2/3 rounded bg-muted" />
+      </div>
+      <div className="mb-3 flex gap-1.5">
+        <div className="h-5 w-14 rounded-full bg-muted" />
+        <div className="h-5 w-16 rounded-full bg-muted" />
+      </div>
+      <div className="flex items-center justify-between border-t border-border/50 pt-3">
+        <div className="h-3 w-20 rounded bg-muted" />
+        <div className="h-3 w-16 rounded bg-muted" />
+      </div>
+    </div>
+  );
+}
 
 export default function TaskList() {
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
-  const { filteredTasks } = useTaskFilters();
+  const { filteredTasks, isFiltered } = useTaskFilters();
+  const { status } = useSelector((state: RootState) => state.taskList);
 
   const { currentPage, totalPages, goToPage, nextPage, prevPage, pageItems } =
     usePagination(filteredTasks.length, PAGE_SIZE);
@@ -56,6 +81,17 @@ export default function TaskList() {
       }
     }
   };
+
+  // Show skeleton while loading
+  if (status === "loading" && filteredTasks.length === 0) {
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <TaskCardSkeleton key={i} />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <>
@@ -134,10 +170,19 @@ export default function TaskList() {
             </div>
           )}
         </>
-      ) : (
+      ) : isFiltered ? (
         <div className="rounded-xl border border-dashed border-border p-12 text-center">
           <p className="text-base text-muted-foreground">
             No tasks match your current filters.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-dashed border-border p-12 text-center">
+          <p className="text-base font-medium text-foreground mb-1">
+            No tasks yet
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Create your first task to get started.
           </p>
         </div>
       )}
